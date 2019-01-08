@@ -10,7 +10,7 @@
 
 ---
 
-私は人生で `super(props)`  必要以上に何度も書いたよ
+私は人生で `super(props)` 何度も書いたよ
 
 ```javascript
 class Checkbox extends React.Component {
@@ -35,7 +35,19 @@ class Checkbox extends React.Component {
 
 コンストラクタの定義と`super(props)`の呼び出しは常にクラスフィールドが人間工学に基づいた代替手段を提供するまでの一時的な解決策だった。
 
-**なぜ私たちはsuperを呼ぶの？呼ばなくてもいいの？もし呼ばないといけないなら、`props`を呼ばなかったらなにが起こるんですか？他の引数はあるの？確認してみましょう。**
+でも、ES2015の機能のみを使って例に戻りましょう。
+
+```javascript
+class Checkbox extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { isOn: true };
+  }
+  // ...
+}
+```
+
+**なぜ私たちはsuperを呼ぶの？呼ばなくてもいいの？もし呼ばないといけないなら、`props`を呼ばなかったらなにが起こるんですか？他に何か議論はありますか？確認してみましょう。**
 
 ---
 
@@ -76,7 +88,7 @@ class PolitePerson extends Person {
 ```
 
 `super`の前に`this`の使用が許可されていた場合のことを想像してみてください。
-一ヶ月後、`greetColleagues`に人の名前を入れるかもしれません。
+一ヶ月後、`greetColleagues`のメッセージに人の名前を入れるかもしれません。
 
 ```javascript
 greetColleagues() {
@@ -103,7 +115,7 @@ constructor(props) {
 
 ---
 
-基本的な`React.Component`でコンストラクターが`this.props`を初期化するために、`props`を`super`に渡すことが必要と思うかも知れません。
+基本的な`React.Component`でコンストラクターが`this.props`を初期化するために、`props`を`super`に渡すことが必要と思うかもしれません。
 
 ```javascript
 // React内部
@@ -133,7 +145,7 @@ Reactがclassをサポートしたとき、ES6のクラスだけをサポート�
 だからES6のclassで`super()`の呼び出しが必須であるにも関わらず、意図的に固執しませんでした。
 
 これは`super(props)`の代わりに`super()`と書けるということを意味してる？
-多分そうじゃない。まだ混乱しますよね。
+多分そうじゃない。まだ紛らわしい。
 確かに、Reactはコンストラクターが実行されたあとに`this.props`を割り当てます。
 でも、親とあなたのコンストラクターの実行が終わるまでの間、`this.props`は未定義なのです。
 
@@ -177,16 +189,16 @@ class Button extends React.Component {
 
 ---
 
-最後に少々。長年のReactユーザーは興味があるかもしれないです。
+長年のReactユーザーは興味があるかもしれないことを最後に少々。
 
 
-もしかしたら気が付いているかもしれませんが、Context APIをclass(古いタイプのcontextTypesもしくはReact 16.6で追加された新しいcontextTypeのどちらでも)内で使用する時、`context`は2つ目の引数としてコンストラクターに渡されます。
+Context APIをclass(古いタイプのcontextTypesもしくはReact 16.6で追加された新しいcontextTypeのどちらでも)内で使用する時、`context`は2つ目の引数としてコンストラクターに渡されることに、気づいているかもしれません。
 
 では、`super(props, context)`と書いてみませんか？できますが、contextはそんなに頻繁に利用されないため、この落とし穴はそれほど頻繁に現れません。
 
-**class fields proposal ではこの落とし穴はほとんど消えます。**
+**`class fields proposal` ではこの落とし穴はほとんど消えます。**
 明示的なコンストラクタがないと全ての引数は自動的に渡されます。
-これはこのような(`state = {}`)式に必要に応じて`this.props`もしくは`this.context`の参照を含めることを許します。
+これはこのような式(`state = {}`)に必要に応じて`this.props`もしくは`this.context`の参照を含めることを許します。
 
-Hooksも`super`もしくは`this`を持っていません。
+Hooksでは`super`もしくは`this`さえ持っていません。
 しかし、これは別の日の話題としましょう。
