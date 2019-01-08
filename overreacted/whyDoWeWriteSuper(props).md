@@ -22,7 +22,7 @@ class Checkbox extends React.Component {
 }
 ```
 
-もちろん、`class fields proposal `なら儀式(constructor)をスキップできる。
+もちろん、`class fields proposal`なら儀式(constructor)をスキップできる。
 
 ```javascript
 class Checkbox extends React.Component {
@@ -121,3 +121,72 @@ class Component {
 `this.props`に`render`や他のメソッド内でアクセスできます。(信じないなら試してみて!)
 
 どうやって動いているんだ？
+**Reactも`props`をコンストラクターを呼んだ後にインスタンスに割り当てていることがわかる**
+
+そう。だからもし`props`を`super`に渡し忘れても、Reactは`props`を設定します。これには理由があります。
+
+Reactがclassをサポートしたとき、ES6のクラスだけをサポートしたのではありません。
+ゴールはより広いクラスの抽象概念をサポートすることでした。
+コンポーネントを定義するのにClojureScript, CoffeeScript, ES6, Fable, Scala.js, TypeScriptや他の方法がどれほど成功するのかは[不明確](https://reactjs.org/blog/2015/01/27/react-v0.13.0-beta-1.html#other-languages)でした。
+
+
+だからES6のclassで`super()`の呼び出しが必須であるにも関わらず、意図的に固執しませんでした。
+
+これは`super(props)`の代わりに`super()`と書けるということを意味してる？
+多分そうじゃない。まだ混乱しますよね。
+確かに、Reactはコンストラクターが実行されたあとに`this.props`を割り当てます。
+でも、親とあなたのコンストラクターの実行が終わるまでの間、`this.props`は未定義なのです。
+
+```javascript
+// React内部
+class Component {
+  constructor(props) {
+    this.props = props;
+    // ...
+  }
+}
+
+// あなたのコード
+class Button extends React.Component {
+  constructor(props) {
+    super(); // 😬 props渡すの忘れちゃった
+    console.log(props);      // ✅ {}
+    console.log(this.props); // 😬 undefined 
+  }
+  // ...
+}
+```
+
+コンストラクタから呼び出されるメソッドでこれが発生した場合、デバッグするのはさらに困難になります。
+**厳密に必要というわけではないですが、私は常に`super(props)`で渡すことをオススメしています。**
+
+
+```javascript
+class Button extends React.Component {
+  constructor(props) {
+    super(props); // ✅ props渡した
+    console.log(props);      // ✅ {}
+    console.log(this.props); // ✅ {}
+  }
+  // ...
+}
+```
+
+これはコンストラクタが終了する前でも`this.props`は設定されているということを保証します。
+
+
+---
+
+最後に少々。長年のReactユーザーは興味があるかもしれないです。
+
+
+もしかしたら気が付いているかもしれませんが、Context APIをclass(古いタイプのcontextTypesもしくはReact 16.6で追加された新しいcontextTypeのどちらでも)内で使用する時、`context`は2つ目の引数としてコンストラクターに渡されます。
+
+では、`super(props, context)`と書いてみませんか？できますが、contextはそんなに頻繁に利用されないため、この落とし穴はそれほど頻繁に現れません。
+
+**class fields proposal ではこの落とし穴はほとんど消えます。**
+明示的なコンストラクタがないと全ての引数は自動的に渡されます。
+これはこのような(`state = {}`)式に必要に応じて`this.props`もしくは`this.context`の参照を含めることを許します。
+
+Hooksも`super`もしくは`this`を持っていません。
+しかし、これは別の日の話題としましょう。
