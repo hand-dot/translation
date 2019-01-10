@@ -63,22 +63,23 @@ Reactはclassとしての定義もサポートしています
 
 このブログはReactがなぜこのように動いているのか知りたい好奇心の強い読者向けです。あなたはそのような人ですか？一緒に深掘りしてみましょう。
 
-**This is a long journey. Buckle up. This post doesn’t have much information about React itself, but we’ll go through some aspects of `new`, `this`, `class`, arrow functions, `prototype`, `__proto__`, `instanceof`, and how those things work together in JavaScript. Luckily, you don’t need to think about those as much when you _use_ React. If you’re implementing React though…**
+**これは長い旅です。ベルトを締めてください。その投稿はReact自身についての十分な情報は持っていません。しかし、Javascriptで`new`, `this`, `class`, arrow functions, `prototype`, `__proto__`,`instanceof`のこれらがどのように機能するか説明します。幸運にもReactを使う時は、これらのことを考える必要がありませんでした。もしあなたがReactを実装しているなら...**
 
-
-(If you really just want to know the answer, scroll to the very end.)
+答えを知りたいだけなら最後までスクロールしてください。
 
 * * *
 
-First, we need to understand why it’s important to treat functions and classes differently. Note how we use the `new` operator when calling a class:
+はじめに、私たちはなぜ関数とクラスの違いを扱うことが大切なのか理解する必要があります。Note: クラスを呼び出す時に`new`演算子を使う方法
 
-    // If Greeting is a function
+
+    // Greetingが関数なら
     const result = Greeting(props); // <p>Hello</p>
     
-    // If Greeting is a class
-    const instance = new Greeting(props); // Greeting {}const result = instance.render(); // <p>Hello</p>
+    // Greetingがクラスなら
+    const instance = new Greeting(props); // Greeting {}
+    const result = instance.render(); // <p>Hello</p>
 
-Let’s get a rough sense of what the `new` operator does in JavaScript.
+JavaScriptで `new`演算子がすることの大まかな意味を理解しましょう。
 
 * * *
 
