@@ -19,7 +19,7 @@ Reactはclassとしての定義もサポートしています
 ```
 
 ( [最近まで](https://reactjs.org/docs/hooks-intro.html),
-ステートの機能を使うための唯一の方法でした）
+ステートの機能を使うための唯一の方法でした)
 
 
 `<Greeting />`を描画するとき、どのように定義されたか気にする必要はありません。
@@ -58,7 +58,7 @@ Reactはclassとしての定義もサポートしています
   const result = instance.render(); // <p>Hello</p>
 ```
 
-どちらのケースでもReactの目的は描画したノードを取得することです。（この例では`<p>Hello</p>`)
+どちらのケースでもReactの目的は描画したノードを取得することです。(この例では`<p>Hello</p>`)
 しかし、実際のステップはどのように`Greeting`が定義されたかということに依存しています。
 
 **Reactはどのようにしてクラスか関数か知るのでしょうか？**
@@ -213,7 +213,7 @@ Babelの初期のバージョンはクラスは`new`なしで呼び出すこと�
   Person('George');   // 🔴 Cannot call a class as a function
 ```
 もしかしたらバンドルされたコード中で`_classCallCheck`というコードをみたことがあるかもしれません。上記の例がそれです。
-（チェックなしで「ルーズモード」を選択することによってバンドルサイズを減らすことができますが、これは実際のネイティブクラスへの最終的な移行を複雑にするかもしれません。）
+(チェックなしで「ルーズモード」を選択することによってバンドルサイズを減らすことができますが、これは実際のネイティブクラスへの最終的な移行を複雑にするかもしれません。)
 (ルーズモードのオプションでバンドルサイズを減らすことができますが、最終的にネイティブのクラスへの移行を複雑にするかもしれません。)
 ---
 
@@ -236,7 +236,7 @@ Babelの初期のバージョンはクラスは`new`なしで呼び出すこと�
 OK,もしかしたらReactは全ての呼び出しに`new`を使えばいい？残念なことに、それは常に正しく動くとは限りません。
 
 通常の関数では、それらを `new`で呼び出すと、それらに` this`としてオブジェクトインスタンスが与えられます。
-これはコンストラクタとして書かれた関数（上記の `Person`のように）には望ましいですが、関数のコンポーネントには混乱を招くでしょう：
+これはコンストラクタとして書かれた関数(上記の `Person`のように)には望ましいですが、関数のコンポーネントには混乱を招くでしょう：
 
 ```javascript
   function Greeting() {
@@ -250,7 +250,7 @@ OK,もしかしたらReactは全ての呼び出しに`new`を使えばいい？�
 ---
 
 The first reason why always using `new` wouldn’t work is that for native arrow functions (not the ones compiled by Babel), calling with `new` throws an error:
-常に`new`を使用してもうまくいかない最初の理由は、ネイティブのarrow関数（Babelによってコンパイルされたものではない）では、`new`を指定して呼び出すとエラーが発生するためです。
+常に`new`を使用してもうまくいかない最初の理由は、ネイティブのarrow関数(Babelによってコンパイルされたものではない)では、`new`を指定して呼び出すとエラーが発生するためです。
 
 ```javascript
   const Greeting = () => <p>Hello</p>;
@@ -291,14 +291,13 @@ Therefore, **JavaScript disallows calling an arrow function with `new`.** If you
 これは、JavaScriptがクラスを`new`無しで呼び出せないのと似ています。
 
 これは素晴らしいことですが、それはまた私たちの計画を打ち立てます。 Reactはすべてのものに対して `new`を呼び出すだけでは不可能です。arrow関数が壊れるから！
-しかし、`prototype`の欠如によってarrow関数を検出を試みることができます、そしてそれらに`new`はつきません。
+しかし、`new`をつけず、`prototype`の欠如によってarrow関数を検出を試みることができます。
 
 ```javascript
   (() => {}).prototype // undefined
   (function() {}).prototype // {constructor: f}
 ```
 
-But this  for functions compiled with Babel. 
 しかしこれはBabelでコンパイルされた関数には[うまく動きません。](https://github.com/facebook/react/issues/4599#issuecomment-136562930)
 これは大したことではないかもしれませんが、このアプローチを行き止まりにするもう1つの理由があります。
 
@@ -315,7 +314,7 @@ But this  for functions compiled with Babel.
   new Greeting(); // 😳 Greeting {}
 ```
 
-これもまた、[`new`演算子]（https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/new）設計に関係しています。 前に見たように、 `new`はJavaScriptエンジンにオブジェクトを作成し、そのオブジェクトを関数の中での`this`にし、そして後で `new`の結果としてそのオブジェクトを渡すように伝えます。
+これもまた、[`new`演算子](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/new)設計に関係しています。 前に見たように、 `new`はJavaScriptエンジンにオブジェクトを作成し、そのオブジェクトを関数の中での`this`にし、そして後で `new`の結果としてそのオブジェクトを渡すように伝えます。
 
 しかしながら、JavaScriptでは、他のオブジェクトを返すことによって、`new`で呼び出された関数が`new`の戻り値をオーバーライドすることもできます。
 おそらく、これはインスタンスを再利用したい場合のプーリングのようなパターンに役立つと考えられていました。
@@ -350,167 +349,242 @@ But this  for functions compiled with Babel.
   new Answer(); // 😳 Answer {}
 ```
 
-There is just no way to read a primitive return value (like a number or a string) from a function when calling it with `new`. So if React always used `new`, it would be unable to add support components that return strings!
+`new`でそれを呼び出すときに、関数からプリミティブな戻り値(数字や文字列のような)を受け取る方法は全くありません。 そのため、Reactが常に `new`を使っていたら、文字列を返すサポートコンポーネントを追加することはできません。
 
-That’s unacceptable so we need to compromise.
-
----
-
-What did we learn so far? React needs to call classes (including Babel output) _with_ `new` but it needs to call regular functions or arrow functions (including Babel output) _without_ `new`. And there is no reliable way to distinguish them.
-
-**If we can’t solve a general problem, can we solve a more specific one?**
-
-When you define a component as a class, you’ll likely want to extend `React.Component` for built-in methods like `this.setState()`. **Rather than try to detect all classes, can we detect only `React.Component` descendants?**
-
-Spoiler: this is exactly what React does.
+それは受け入れられないので、諦める必要があります。
 
 ---
 
-Perhaps, the idiomatic way to check if `Greeting` is a React component class is by testing if `Greeting.prototype instanceof React.Component`:
+What did we learn so far? React needs to call classes (including Babel output) with `new` but it needs to call regular functions or arrow functions (including Babel output) without `new`. And there is no reliable way to distinguish them.
+これまでに何を学びましたか？ Reactは `new`を使ってクラス(Babel出力を含む)を呼び出す必要がありますが、`new`を使わずに通常の関数やarrow関数(Babel出力を含む)を呼び出す必要があります。 そしてそれらを区別する信頼できる方法はありません。
 
-    class A {}
-    class B extends A {}
-    
-    console.log(B.prototype instanceof A); // true
+**一般的な問題を解決できないなら、より具体的な問題を解決できますか？**
 
-I know what you’re thinking. What just happened here?! To answer this, we need to understand JavaScript prototypes.
+コンポーネントをクラスとして定義するとき、おそらく `this.setState()`のような組み込みメソッドのために `React.Component`を拡張します。
+**すべてのクラスを検出しようとするのではなく、 `React.Component`の子孫だけを検出できますか？**
 
-You might be familiar with the “prototype chain”. Every object in JavaScript might have a “prototype”. When we write `fred.sayHi()` but `fred` object has no `sayHi` property, we look for `sayHi` property on `fred`’s prototype. If we don’t find it there, we look at the next prototype in the chain — `fred`’s prototype’s prototype. And so on.
+ネタバレ：これはReactがすることです。
 
-**Confusingly, the `prototype` property of a class or a function _does not_ point to the prototype of that value.** I’m not kidding.
+---
 
-    function Person() {}
-    
-    console.log(Person.prototype); // 🤪 Not Person's prototype
-    console.log(Person.__proto__); // 😳 Person's prototype
+おそらく、 `Greeting`がReactコンポーネントクラスかどうかをチェックする慣用的な方法は、` Greeting.prototype instanceof React.Component`かどうかをテストすることです。
 
-So the “prototype chain” is more like `__proto__.__proto__.__proto__` than `prototype.prototype.prototype`. This took me years to get.
+```javascript
+  class A {}
+  class B extends A {}
+  
+  console.log(B.prototype instanceof A); // true
+```
 
-What’s the `prototype` property on a function or a class, then? **It’s the `__proto__` given to all objects `new`ed with that class or a function!**
+私はあなたが何を考えているのか知っています。 ここで何が起きたのですか？ これに答えるためには、JavaScriptプロトタイプを理解する必要があります。
 
-    function Person(name) {
-      this.name = name;
+もしかしたらあなたは“prototype chain”に精通しているかもしれません。
+Javascriptでは全てのオブジェクトは“prototype”を持っています。
+`fred.sayHi()`を書いたときに、`fred`オブジェクトが`sayHi`プロパティを持っていなかったら、`fred`のプロトタイプで`sayHi`を探します。
+もしそこで見つからなかったら、チェーン内から次のプロトタイプである`fred`のプロトタイプのプロトタイプを探します。
+
+**紛らわしいことに、クラスや関数の `prototype`プロパティはその値のプロトタイプを指し示すわけではありません。**冗談じゃないよ。
+```javascript
+  function Person() {}
+  
+  console.log(Person.prototype); // 🤪 Personのprototypeじゃない
+  console.log(Person.__proto__); // 😳 Personのprototype
+```
+
+「プロトタイプチェーン」は `prototype.prototype.prototype`より` __proto __.__ proto __.__ proto__`ですね。 私はこれに何年も要しましたよ。
+
+それでは、関数やクラスの `prototype`プロパティは何ですか？ **それはそのクラスまたは関数で `new`されたすべてのオブジェクトに与えられた` __proto__`です！**
+
+```javascript
+  function Person(name) {
+    this.name = name;
+  }
+  Person.prototype.sayHi = function() {
+    alert('Hi, I am ' + this.name);
+  }
+  
+  var fred = new Person('Fred'); // `Person.prototype`に`fred.__proto__`を設定
+```
+
+そしてその `__proto__`チェーンがJavaScriptがプロパティを調べる方法です。
+
+```javascript
+  fred.sayHi();
+  // 1. Does fred have a sayHi property? No.
+  // 2. Does fred.__proto__ have a sayHi property? Yes. これを呼ぶ!
+  
+  fred.toString();
+  // 1. Does fred have a toString property? No.
+  // 2. Does fred.__proto__ have a toString property? No.
+  // 3. Does fred.__proto__.__proto__ have a toString property? Yes. これを呼ぶ!
+```
+
+実際には、プロトタイプチェーンに関連するものをデバッグしているのでなければ、コードから直接 `__proto__`を直接触る必要はないはずです。
+`fred .__ proto__`で利用可能にしたい場合は、それを` Person.prototype`に置くことになっています。
+少なくともそれはもともと設計された方法です。
+
+
+プロトタイプチェーンは内部概念と考えられていたため、 `__proto__`プロパティは最初はブラウザによって公開されることさえ想定されていませんでした。
+しかし、いくつかのブラウザは `__proto__`を追加し、結局それはひどく標準化されました(しかし` Object.getPrototypeOf()`を支持して推奨されなくなりました)。
+
+**それでもなお、 `prototype`と呼ばれるプロパティが値のプロトタイプを与えないことは非常に混乱します。例えば、`fred`は関数ではないので `fred.prototype`は未定義です。 個人的には、これが経験豊富な開発者でさえJavaScriptプロトタイプを誤解しがちな最大の理由だと思います。
+
+---
+
+これは長い記事ですね。 現在80％くらいの場所にいると思います。 あとちょっと。
+
+`obj.foo`を実行したとき、JavaScriptは実際には`obj`の`foo`を探すとき、 `obj .__ proto__`、` obj .__ proto __.__ proto__`などの中で探を探します。
+
+クラスでは、このメカニズムに直接さらされることはありませんが、 `extends`は古き良きプロトタイプチェーンの上でも機能します。 それが私たちのReactクラスインスタンスが `setState`のようなメソッドにアクセスする方法です：
+
+```javascript
+  class Greeting extends React.Component {
+    render() {
+      return <p>Hello</p>;
     }
-    Person.prototype.sayHi = function() {
-      alert('Hi, I am ' + this.name);
-    }
-    
-    var fred = new Person('Fred'); // Sets `fred.__proto__` to `Person.prototype`
+  }
+  
+  let c = new Greeting();
+  console.log(c.__proto__); // Greeting.prototype
+  console.log(c.__proto__.__proto__); // React.Component.prototype
+  console.log(c.__proto__.__proto__.__proto__); // Object.prototype
+  
+  c.render();      // Found on c.__proto__ (Greeting.prototype)
+  c.setState();    // Found on c.__proto__.__proto__ (React.Component.prototype)
+  c.toString();    // Found on c.__proto__.__proto__.__proto__ (Object.prototype)
+```
 
-And that `__proto__` chain is how JavaScript looks up properties:
+言い換えれば、**クラスを使うとき、インスタンスの `__proto__`チェーンはクラス階層を反映しています。：**
 
-    fred.sayHi();
-    // 1. Does fred have a sayHi property? No.
-    // 2. Does fred.__proto__ have a sayHi property? Yes. Call it!
-    
-    fred.toString();
-    // 1. Does fred have a toString property? No.
-    // 2. Does fred.__proto__ have a toString property? No.
-    // 3. Does fred.__proto__.__proto__ have a toString property? Yes. Call it!
-
-In practice, you should almost never need to touch `__proto__` from the code directly unless you’re debugging something related to the prototype chain. If you want to make stuff available on `fred.__proto__`, you’re supposed to put it on `Person.prototype`. At least that’s how it was originally designed.
-
-The `__proto__` property wasn’t even supposed to be exposed by browsers at first because the prototype chain was considered an internal concept. But some browsers added `__proto__` and eventually it was begrudgingly standardized (but deprecated in favor of `Object.getPrototypeOf()`).
-
-**And yet I still find it very confusing that a property called `prototype` does not give you a value’s prototype** (for example, `fred.prototype` is undefined because `fred` is not a function). Personally, I think this is the biggest reason even experienced developers tend to misunderstand JavaScript prototypes.
-
----
-
-This is a long post, eh? I’d say we’re 80% there. Hang on.
-
-We know that when say `obj.foo`, JavaScript actually looks for `foo` in `obj`, `obj.__proto__`, `obj.__proto__.__proto__`, and so on.
-
-With classes, you’re not exposed directly to this mechanism, but `extends` also works on top of the good old prototype chain. That’s how our React class instance gets access to methods like `setState`:
-
-    class Greeting extends React.Component {  render() {
-        return <p>Hello</p>;
-      }
-    }
-    
-    let c = new Greeting();
-    console.log(c.__proto__); // Greeting.prototype
-    console.log(c.__proto__.__proto__); // React.Component.prototypeconsole.log(c.__proto__.__proto__.__proto__); // Object.prototype
-    
-    c.render();      // Found on c.__proto__ (Greeting.prototype)
-    c.setState();    // Found on c.__proto__.__proto__ (React.Component.prototype)c.toString();    // Found on c.__proto__.__proto__.__proto__ (Object.prototype)
-
-In other words, **when you use classes, an instance’s `__proto__` chain “mirrors” the class hierarchy:**
-
-    // `extends` chain
-    Greeting
-      → React.Component
-        → Object (implicitly)
-    
-    // `__proto__` chain
-    new Greeting()
-      → Greeting.prototype
-        → React.Component.prototype
-          → Object.prototype
-
-2 Chainz.
+```javascript
+  // `extends` chain
+  Greeting
+    → React.Component
+      → Object (implicitly)
+  
+  // `__proto__` chain
+  new Greeting()
+    → Greeting.prototype
+      → React.Component.prototype
+        → Object.prototype
+```
 
 ---
 
-Since the `__proto__` chain mirrors the class hierarchy, we can check whether a `Greeting` extends `React.Component` by starting with `Greeting.prototype`, and then following down its `__proto__` chain:
+`__proto__`チェーンはクラス階層を反映しているので、`Greeting.prototype`から始めて、
+その`__proto__`チェーンをたどることで`Greeting`が `React.Component`を拡張しているかどうかをチェックすることができます。
 
-    // `__proto__` chain
-    new Greeting()
-      → Greeting.prototype // 🕵️ We start here    → React.Component.prototype // ✅ Found it!      → Object.prototype
+```javascript
+  // `__proto__` chain
+  new Greeting()
+    → Greeting.prototype // 🕵️ ここから始める
+      → React.Component.prototype // ✅ 見つけた!
+        → Object.prototype
+```
 
-Conveniently, `x instanceof Y` does exactly this kind of search. It follows the `x.__proto__` chain looking for `Y.prototype` there.
+便利なことに、 `x instanceof Y`はまさにこの検索を行います。 それは `x.__ proto__`チェーンで `Y.prototype`を探します。
+通常は、何かがクラスのインスタンスであるかどうかを判断するために使用されます。
 
-Normally, it’s used to determine whether something is an instance of a class:
+```javascript
+  let greeting = new Greeting();
+  
+  console.log(greeting instanceof Greeting); // true
+  // greeting (🕵️‍ ここから始める)
+  //   .__proto__ → Greeting.prototype (✅ 見つけた!)
+  //     .__proto__ → React.Component.prototype 
+  //       .__proto__ → Object.prototype
+  
+  console.log(greeting instanceof React.Component); // true
+  // greeting (🕵️‍ ここから始める)
+  //   .__proto__ → Greeting.prototype
+  //     .__proto__ → React.Component.prototype (✅ 見つけた!)
+  //       .__proto__ → Object.prototype
+  
+  console.log(greeting instanceof Object); // true
+  // greeting (🕵️‍ ここから始める)
+  //   .__proto__ → Greeting.prototype
+  //     .__proto__ → React.Component.prototype
+  //       .__proto__ → Object.prototype (✅ 見つけた!)
+  
+  console.log(greeting instanceof Banana); // false
+  // greeting (🕵️‍ ここから始める)
+  //   .__proto__ → Greeting.prototype
+  //     .__proto__ → React.Component.prototype 
+  //       .__proto__ → Object.prototype (🙅‍ 見つからなかった)
+```
 
-    let greeting = new Greeting();
-    
-    console.log(greeting instanceof Greeting); // true
-    // greeting (🕵️‍ We start here)
-    //   .__proto__ → Greeting.prototype (✅ Found it!)
-    //     .__proto__ → React.Component.prototype 
-    //       .__proto__ → Object.prototype
-    
-    console.log(greeting instanceof React.Component); // true
-    // greeting (🕵️‍ We start here)
-    //   .__proto__ → Greeting.prototype
-    //     .__proto__ → React.Component.prototype (✅ Found it!)
-    //       .__proto__ → Object.prototype
-    
-    console.log(greeting instanceof Object); // true
-    // greeting (🕵️‍ We start here)
-    //   .__proto__ → Greeting.prototype
-    //     .__proto__ → React.Component.prototype
-    //       .__proto__ → Object.prototype (✅ Found it!)
-    
-    console.log(greeting instanceof Banana); // false
-    // greeting (🕵️‍ We start here)
-    //   .__proto__ → Greeting.prototype
-    //     .__proto__ → React.Component.prototype 
-    //       .__proto__ → Object.prototype (🙅‍ Did not find it!)
+しかし、あるクラスが別のクラスを継承しているかどうかを判断するのと同じようにうまくいきます。
 
-But it would work just as fine to determine if a class extends another class:
+```javascript
+  console.log(Greeting.prototype instanceof React.Component);
+  // greeting
+  //   .__proto__ → Greeting.prototype (🕵️‍ We start here)
+  //     .__proto__ → React.Component.prototype (✅ Found it!)
+  //       .__proto__ → Object.prototype
+```
 
-    console.log(Greeting.prototype instanceof React.Component);
-    // greeting
-    //   .__proto__ → Greeting.prototype (🕵️‍ We start here)
-    //     .__proto__ → React.Component.prototype (✅ Found it!)
-    //       .__proto__ → Object.prototype
-
-And that check is how we could determine if something is a React component class or a regular function.
-
+そしてこのチェックは、Reactコンポーネントクラスなのか通常の関数なのかを判断する方法です。
 ---
 
-That’s not what React does though. 😳
+しかしこれはReactがすることではありません。 😳
 
-One caveat to the `instanceof` solution is that it doesn’t work when there are multiple copies of React on the page, and the component we’re checking inherits from _another_ React copy’s `React.Component`. Mixing multiple copies of React in a single project is bad for several reasons but historically we’ve tried to avoid issues when possible. (With Hooks, we [might need to](https://github.com/facebook/react/issues/13991) force deduplication though.)
+`instanceof`ソリューションの注意点の1つは、ページ上にReactのコピーが複数ある場合、それが機能しないことです。
 
-One other possible heuristic could be to check for presence of a `render` method on the prototype. However, at the time it [wasn’t clear](https://github.com/facebook/react/issues/4599#issuecomment-129714112) how the component API would evolve. Every check has a cost so we wouldn’t want to add more than one. This would also not work if `render` was defined as an instance method, such as with the class property syntax.
+1つのプロジェクトにReactの複数のコピーを混在させるのは、いくつかの理由で好ましくありませんが、私たちはこれまで可能な限り問題を避けるようにしてきました。
+(Hooksの場合、重複排除を強制する[必要がある](https://github.com/facebook/react/issues/13991)かもしれません。)
 
-So instead, React [added](https://github.com/facebook/react/pull/4663) a special flag to the base component. React checks for the presence of that flag, and that’s how it knows whether something is a React component class or not.
+もう1つの可能性のある発見的方法は、プロトタイプ上の `render`メソッドの存在をチェックすることです。
+ただし、その当時は、コンポーネントAPIがどのように進化するのか[明確ではありませんでした](https://github.com/facebook/react/issues/4599#issuecomment-129714112)。
+すべてのチェックにはコストがかかるため、複数を追加することは望ましくありません。 
+クラスプロパティ構文のように `render`がインスタンスメソッドとして定義されている場合もこれは機能しません。
 
-Originally the flag was on the base `React.Component` class itself:
+その代わりに、基本コンポーネントに特別なフラグをReact [追加](https://github.com/facebook/react/pull/4663)します。
+Reactはそのフラグの存在をチェックし、それがReactコンポーネントクラスであるかどうかを知る方法です。
 
-    // Inside React
-    class Component {}
-    Component.isReactClass = {};
-    
-   
+もともとフラグはReact.Componentクラス自体にありました：
+
+```javascript
+  // React内部
+  class Component {}
+  Component.isReactClass = {};
+
+  // こんな感じでチェックできます。
+  class Greeting extends Component {}
+  console.log(Greeting.isReactClass); // ✅ Yes
+```   
+
+However, some class implementations we wanted to target [did not](https://github.com/scala-js/scala-js/issues/1900) copy static properties (or set the non-standard `__proto__`), so the flag was getting lost.
+This is why React [moved](https://github.com/facebook/react/pull/5021) this flag to `React.Component.prototype`:
+
+```javascript
+  // React内部
+  class Component {}
+  Component.prototype.isReactComponent = {};
+
+  // こんな感じでチェックできます。
+  class Greeting extends Component {}
+  console.log(Greeting.prototype.isReactComponent); // ✅ Yes
+```
+
+**そしてこれは文字通りすべてです。**
+
+You might be wondering why it’s an object and not just a boolean. It doesn’t matter much in practice but early versions of Jest (before Jest was Good™️) had automocking turned on by default. The generated mocks omitted primitive properties, [breaking the check](https://github.com/facebook/react/pull/4663#issuecomment-136533373). Thanks, Jest.
+なぜそれが単なるブール値ではなくオブジェクトであるのか疑問に思うかもしれません。 実際にはそれほど重要ではありませんが、Jestの初期のバージョン(JestがGood™️以前のバージョン)では、デフォルトで自動モックが有効になっていました。 生成されたモックはプリミティブプロパティを削除しました。[変更を見る。](https://github.com/facebook/react/pull/4663#issuecomment-136533373) ありがとう、Jest。
+
+`isReactComponent`チェックは今日[Reactで使われています。](https://github.com/facebook/react/blob/769b1f270e1251d9dbdce0fcbd9e92e502d059b8/packages/react-reconciler/src/ReactFiber.js#L297-L300)
+
+`React.Component`を継承しないのであれば、Reactはプロトタイプ上で` isReactComponent`を見つけることができず、コンポーネントをクラスとして扱うこともできません。
+今、あなたは`Cannot call a class as a function`のエラーに対する[最も支持された答え](https://stackoverflow.com/questions/38481857/getting-cannot-call-a-class-as-a-function-in-my-react-project/42680526#42680526)が`extends React.Component`を追加することである理由はわかりますね。
+最後に、`prototype.render`が存在するが` prototype.isReactComponent`が存在しない場合に警告する警告が追加されました。
+
+
+もしかしたらあなたはこの物語が引っ掛けだと言うかもしれません。
+**実際の解決策は非常に単純ですが、Reactがこの解決策を採用した理由とその代替案について説明するために、話を大きく脱線しました。**
+
+私の経験ではこれは多くの場合ライブラリのAPIの場合です。
+APIを使いやすくするためには、言語のセマンティクス（将来の方向性を含むいくつかの言語について）、実行時のパフォーマンス、コンパイルの手順、エコシステムの状態、およびパッケージソリューション、早期警告など、多くのことを考慮する必要があります。
+ 最終的な結果は必ずしも最も洗練されたものではないかもしれませんが、それは実用的でなければなりません。
+
+**最終的なAPIが成功した場合、そのユーザーはこのプロセスについて考える必要はありません**。 代わりに、彼らはアプリの作成に集中することができます。
+
+しかし、あなたも興味があれば…それがどのように動くのか知っているのはいいことです。
