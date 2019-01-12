@@ -216,7 +216,7 @@ Babelの初期のバージョンはクラスは`new`なしで呼び出すこと�
 
 ---
 
-ここまでで、 `new`を付けて呼び出した場合と` new`を付けずに呼び出した場合の違いをおおまかに理解できるはずです。
+ここまでで、 `new`を付けて呼び出した場合と`new`を付けずに呼び出した場合の違いをおおまかに理解できるはずです。
 
 |            | `new Person()`                  | `Person()`                           |
 | ---------- | ------------------------------- | ------------------------------------ |
@@ -225,30 +225,29 @@ Babelの初期のバージョンはクラスは`new`なしで呼び出すこと�
 
 そのため、Reactがコンポーネントを正しく呼び出すことが重要です。 **あなたのコンポーネントがクラスとして定義されている場合、Reactはそれを呼び出すときに `new`を使う必要があります。**
 
-それでReactは何かがクラスであるかどうかを単にチェックすることができますか？
+それでReactは呼び出そうとしているコンポーネントがクラスであるかどうかを単にチェックすることができますか？
 
 そう簡単ではありません！[JavaScriptの関数からクラスを見分ける]((https://stackoverflow.com/questions/29093396/how-do-you-check-the-difference-between-an-ecmascript-6-class-and-function))ことができたとしても、
 これはまだBabelのようなツールで処理されたクラスにはうまくいかないでしょう。ブラウザにとっては、それらは単なる普通の関数です。 Reactは頑張ってください。
 
 ---
 
-OK,もしかしたらReactは全ての呼び出しに`new`を使えばいい？残念なことに、それは常に正しく動くとは限りません。
+OK,もしかしたらReactは全ての呼び出しに`new`を使えばいいのでは？残念なことに、それは常に正しく動くとは限りません。
 
-通常の関数では、それらを `new`で呼び出すと、それらに` this`としてオブジェクトインスタンスが与えられます。
-これはコンストラクタとして書かれた関数(上記の `Person`のように)には望ましいですが、関数のコンポーネントには混乱を招くでしょう：
+通常の関数では、それらを `new`で呼び出すと、それらに`this`としてオブジェクトインスタンスが与えられます。
+これはコンストラクタとして書かれた関数(上記の `Person`)には望ましいですが、関数のコンポーネントには混乱を招くでしょう：
 
 ```javascript
   function Greeting() {
-    // ここで `this`が他の種類のインスタンスであるとも思わないでしょう
+    // ここで `this`が他の種類のインスタンスであるとは思わないでしょう
     return <p>Hello</p>;
   }
 ```
 
-それは許容できるかもしれません。 この考えを殺すのには他に2つの理由があります。
+それは許容できるかもしれません。 しかしこの考えをやめるのは他に2つの理由があります。
 
 ---
 
-The first reason why always using `new` wouldn’t work is that for native arrow functions (not the ones compiled by Babel), calling with `new` throws an error:
 常に`new`を使用してもうまくいかない最初の理由は、ネイティブのarrow関数(Babelによってコンパイルされたものではない)では、`new`を指定して呼び出すとエラーが発生するためです。
 
 ```javascript
@@ -285,11 +284,10 @@ arrow関数の主な利点の1つは、それらが独自の `this`値を持た�
   }
 ```
 
-Therefore, **JavaScript disallows calling an arrow function with `new`.** If you do it, you probably made a mistake anyway, and it’s best to tell you early. This is similar to how JavaScript doesn’t let you call a class _without_ `new`.
-そのため、**JavaScriptでは `new`を使用してarrow関数を呼び出すことはできません。**これを実行した場合は、間違いを犯している可能性があります。
+そのため、**JavaScriptでは `new`を使用してarrow関数を呼び出すことはできません。** これを実行した場合は、間違いを犯している可能性があります。
 これは、JavaScriptがクラスを`new`無しで呼び出せないのと似ています。
 
-これは素晴らしいことですが、それはまた私たちの計画を打ち立てます。 Reactはすべてのものに対して `new`を呼び出すだけでは不可能です。arrow関数が壊れるから！
+これは素晴らしいことですが、 Reactはすべてのものに対して `new`を呼び出すだけでは不可能です。arrow関数が壊れるから！
 しかし、`new`をつけず、`prototype`の欠如によってarrow関数を検出を試みることができます。
 
 ```javascript
@@ -325,7 +323,9 @@ Therefore, **JavaScript disallows calling an arrow function with `new`.** If you
   function Vector(x, y) {
     if (x === 0 && y === 0) {
       if (zeroVector !== null) {
-        // Reuse the same instance      return zeroVector;    }
+        // 同じインスタンスを再利用する
+        return zeroVector;
+      }
       zeroVector = this;
     }
     this.x = x;
@@ -337,7 +337,7 @@ Therefore, **JavaScript disallows calling an arrow function with `new`.** If you
   var c = new Vector(0, 0); // 😲 b === c
 ```
 
-ただし、関数がオブジェクトではない場合、`new`は関数の戻り値を完全に無視します。 あなたが文字列や数字を返す場合、それは `return`がまったくなかったようです。
+ただし、関数がオブジェクトではない場合、`new`は関数の戻り値を完全に無視します。 あなたが文字列や数字を返す場合、それは `return`が全くなかったように振る舞います。
 
 ```javascript
   function Answer() {
@@ -354,10 +354,9 @@ Therefore, **JavaScript disallows calling an arrow function with `new`.** If you
 
 ---
 
-What did we learn so far? React needs to call classes (including Babel output) with `new` but it needs to call regular functions or arrow functions (including Babel output) without `new`. And there is no reliable way to distinguish them.
 これまでに何を学びましたか？ Reactは `new`を使ってクラス(Babel出力を含む)を呼び出す必要がありますが、`new`を使わずに通常の関数やarrow関数(Babel出力を含む)を呼び出す必要があります。 そしてそれらを区別する信頼できる方法はありません。
 
-**一般的な問題を解決できないなら、より具体的な問題を解決できますか？**
+**一般的な問題を解決できないなら、より具体的な問題なら解決できるかもしれません。**
 
 コンポーネントをクラスとして定義するとき、おそらく `this.setState()`のような組み込みメソッドのために `React.Component`を拡張します。
 **すべてのクラスを検出しようとするのではなく、 `React.Component`の子孫だけを検出できますか？**
@@ -382,7 +381,7 @@ Javascriptでは全てのオブジェクトは“prototype”を持っていま�
 `fred.sayHi()`を書いたときに、`fred`オブジェクトが`sayHi`プロパティを持っていなかったら、`fred`のプロトタイプで`sayHi`を探します。
 もしそこで見つからなかったら、チェーン内から次のプロトタイプである`fred`のプロトタイプのプロトタイプを探します。
 
-**紛らわしいことに、クラスや関数の `prototype`プロパティはその値のプロトタイプを指し示すわけではありません。**冗談じゃないよ。
+**紛らわしいことに、クラスや関数の `prototype`プロパティはその値のプロトタイプを指し示すわけではありません。** 冗談じゃないよ。
 ```javascript
   function Person() {}
   
@@ -392,7 +391,8 @@ Javascriptでは全てのオブジェクトは“prototype”を持っていま�
 
 「プロトタイプチェーン」は `prototype.prototype.prototype`より` __proto __.__ proto __.__ proto__`ですね。 私はこれに何年も要しましたよ。
 
-それでは、関数やクラスの `prototype`プロパティは何ですか？ **それはそのクラスまたは関数で `new`されたすべてのオブジェクトに与えられた` __proto__`です！**
+それでは、関数やクラスの `prototype`プロパティは何ですか？
+**それはそのクラスまたは関数で `new`されたすべてのオブジェクトに与えられた` __proto__`です！**
 
 ```javascript
   function Person(name) {
@@ -402,7 +402,7 @@ Javascriptでは全てのオブジェクトは“prototype”を持っていま�
     alert('Hi, I am ' + this.name);
   }
   
-  var fred = new Person('Fred'); // `Person.prototype`に`fred.__proto__`を設定
+  var fred = new Person('Fred'); // `fred.__proto__`に`Person.prototype`を設定
 ```
 
 そしてその `__proto__`チェーンがJavaScriptがプロパティを調べる方法です。
@@ -426,13 +426,15 @@ Javascriptでは全てのオブジェクトは“prototype”を持っていま�
 プロトタイプチェーンは内部概念と考えられていたため、 `__proto__`プロパティは最初はブラウザによって公開されることさえ想定されていませんでした。
 しかし、いくつかのブラウザは `__proto__`を追加し、結局それはひどく標準化されました(しかし` Object.getPrototypeOf()`を支持して推奨されなくなりました)。
 
-**それでもなお、 `prototype`と呼ばれるプロパティが値のプロトタイプを与えないことは非常に混乱します。例えば、`fred`は関数ではないので `fred.prototype`は未定義です。 個人的には、これが経験豊富な開発者でさえJavaScriptプロトタイプを誤解しがちな最大の理由だと思います。
+**それでもなお、 `prototype`と呼ばれるプロパティが値のプロトタイプを与えないことは非常に混乱します。** 
+(例えば、`fred`は関数ではないので `fred.prototype`は未定義です。)
+個人的には、これが経験豊富な開発者でさえJavaScriptプロトタイプを誤解しがちな最大の理由だと思います。
 
 ---
 
 これは長い記事ですね。 現在80％くらいの場所にいると思います。 あとちょっと。
 
-`obj.foo`を実行したとき、JavaScriptは実際には`obj`の`foo`を探すとき、 `obj .__ proto__`、` obj .__ proto __.__ proto__`などの中で探を探します。
+`obj.foo`を実行したとき、JavaScriptは実際には`obj`の`foo`を探し、 `obj .__ proto__`、` obj .__ proto __.__ proto__`などのように続きます。
 
 クラスでは、このメカニズムに直接さらされることはありませんが、 `extends`は古き良きプロトタイプチェーンの上でも機能します。 それが私たちのReactクラスインスタンスが `setState`のようなメソッドにアクセスする方法です：
 
@@ -538,7 +540,7 @@ Javascriptでは全てのオブジェクトは“prototype”を持っていま�
 すべてのチェックにはコストがかかるため、複数を追加することは望ましくありません。 
 クラスプロパティ構文のように `render`がインスタンスメソッドとして定義されている場合もこれは機能しません。
 
-その代わりに、基本コンポーネントに特別なフラグをReact [追加](https://github.com/facebook/react/pull/4663)します。
+その代わりに、基本コンポーネントに特別なフラグをReactに[追加](https://github.com/facebook/react/pull/4663)します。
 Reactはそのフラグの存在をチェックし、それがReactコンポーネントクラスであるかどうかを知る方法です。
 
 もともとフラグはReact.Componentクラス自体にありました：
@@ -553,8 +555,9 @@ Reactはそのフラグの存在をチェックし、それがReactコンポー�
   console.log(Greeting.isReactClass); // ✅ Yes
 ```   
 
-However, some class implementations we wanted to target [did not](https://github.com/scala-js/scala-js/issues/1900) copy static properties (or set the non-standard `__proto__`), so the flag was getting lost.
-This is why React [moved](https://github.com/facebook/react/pull/5021) this flag to `React.Component.prototype`:
+しかし、私たちがターゲットにしたかったクラス実装の中には静的プロパティを[コピーしない](https://github.com/scala-js/scala-js/issues/1900)（あるいは非標準の__proto__を設定する）ものがあったので、フラグは失われていました。
+これが、ReactがこのフラグをReact.Component.prototypeに[移動](https://github.com/facebook/react/pull/5021)した理由です。
+
 
 ```javascript
   // React内部
@@ -568,24 +571,25 @@ This is why React [moved](https://github.com/facebook/react/pull/5021) this flag
 
 **そしてこれは文字通りすべてです。**
 
-You might be wondering why it’s an object and not just a boolean. It doesn’t matter much in practice but early versions of Jest (before Jest was Good™️) had automocking turned on by default. The generated mocks omitted primitive properties, [breaking the check](https://github.com/facebook/react/pull/4663#issuecomment-136533373). Thanks, Jest.
-なぜそれが単なるブール値ではなくオブジェクトであるのか疑問に思うかもしれません。 実際にはそれほど重要ではありませんが、Jestの初期のバージョン(JestがGood™️以前のバージョン)では、デフォルトで自動モックが有効になっていました。 生成されたモックはプリミティブプロパティを削除しました。[変更を見る。](https://github.com/facebook/react/pull/4663#issuecomment-136533373) ありがとう、Jest。
+なぜそれが単なるブール値ではなくオブジェクトであるのか疑問に思うかもしれません。 
+実際にはそれほど重要ではありませんが、Jestの初期のバージョン(JestがGood™️以前のバージョン)では、デフォルトで自動モックが有効になっていました。
+生成されたモックはプリミティブプロパティを削除しました。[変更を見る。](https://github.com/facebook/react/pull/4663#issuecomment-136533373) ありがとう、Jest。
 
 `isReactComponent`チェックは今日[Reactで使われています。](https://github.com/facebook/react/blob/769b1f270e1251d9dbdce0fcbd9e92e502d059b8/packages/react-reconciler/src/ReactFiber.js#L297-L300)
 
-`React.Component`を継承しないのであれば、Reactはプロトタイプ上で` isReactComponent`を見つけることができず、コンポーネントをクラスとして扱うこともできません。
+`React.Component`を継承しないのであれば、Reactはプロトタイプ上で`isReactComponent`を見つけることができず、コンポーネントをクラスとして扱うこともできません。
 今、あなたは`Cannot call a class as a function`のエラーに対する[最も支持された答え](https://stackoverflow.com/questions/38481857/getting-cannot-call-a-class-as-a-function-in-my-react-project/42680526#42680526)が`extends React.Component`を追加することである理由はわかりますね。
-最後に、`prototype.render`が存在するが` prototype.isReactComponent`が存在しない場合に警告する警告が追加されました。
+最後に、`prototype.render`が存在するが`prototype.isReactComponent`が存在しない場合に警告するというのも追加されました。
 
 ---
 
-もしかしたらあなたはこの物語が引っ掛けだと言うかもしれません。
+もしかしたらあなたはこの話が引っ掛けだと言うかもしれません。
 **実際の解決策は非常に単純ですが、Reactがこの解決策を採用した理由とその代替案について説明するために、話を大きく脱線しました。**
 
-私の経験ではこれは多くの場合ライブラリのAPIの場合です。
+私の経験では、ライブラリのAPIの場合、
 APIを使いやすくするためには、言語のセマンティクス（将来の方向性を含むいくつかの言語について）、実行時のパフォーマンス、コンパイルの手順、エコシステムの状態、およびパッケージソリューション、早期警告など、多くのことを考慮する必要があります。
- 最終的な結果は必ずしも最も洗練されたものではないかもしれませんが、それは実用的でなければなりません。
+ 最終的な結果は必ずしも最も洗練されたものではないかもしれませんが、それは常に実用的でなければなりません。
 
 **最終的なAPIが成功した場合、そのユーザーはこのプロセスについて考える必要はありません**。 代わりに、彼らはアプリの作成に集中することができます。
 
-しかし、あなたも興味があれば…それがどのように動くのか知っているのはいいことです。
+しかし、あなたも興味があればそれがどのように動くのか知っているのはいいことです。
