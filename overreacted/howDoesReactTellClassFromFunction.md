@@ -195,136 +195,160 @@ Javascriptはそれをエラーとして扱うので、普通の関数を単に�
 
 ---
 
-Before we see how React solves this, it’s important to remember most people using React use compilers like Babel to compile away modern features like classes for older browsers. So we need to consider compilers in our design.
+Reactがこれをどうやって解決するかを見る前に、Reactを使うほとんどの人がBabelのようなコンパイラを使って古いブラウザのためにクラスのような機能をコンパイルしていることを覚えておくことが重要です。だから我々は私たちのデザインでコンパイラを考慮する必要があります。
 
-In early versions of Babel, classes could be called without `new`. However, this was fixed — by generating some extra code:
+Babelの初期のバージョンはクラスは`new`なしで呼び出すことができました。しかし、これは下記のコードを生成することで修正されました。
 
-    function Person(name) {
-      // A bit simplified from Babel output:
-      if (!(this instanceof Person)) {
-        throw new TypeError("Cannot call a class as a function");
-      }
-      // Our code:
-      this.name = name;
+```javascript
+  function Person(name) {
+    // Babelの出力から少し簡略化したもの
+    if (!(this instanceof Person)) {
+      throw new TypeError("Cannot call a class as a function");
     }
-    
-    new Person('Fred'); // ✅ Okay
-    Person('George');   // 🔴 Cannot call a class as a function
+    // 自分のコード
+    this.name = name;
+  }
+  
+  new Person('Fred'); // ✅ OK
+  Person('George');   // 🔴 Cannot call a class as a function
+```
+もしかしたらバンドルされたコード中で`_classCallCheck`というコードをみたことがあるかもしれません。上記の例がそれです。
+（チェックなしで「ルーズモード」を選択することによってバンドルサイズを減らすことができますが、これは実際のネイティブクラスへの最終的な移行を複雑にするかもしれません。）
+(ルーズモードのオプションでバンドルサイズを減らすことができますが、最終的にネイティブのクラスへの移行を複雑にするかもしれません。)
+---
 
-You might have seen code like this in your bundle. That’s what all those `_classCallCheck` functions do. (You can reduce the bundle size by opting into the “loose mode” with no checks but this might complicate your eventual transition to real native classes.)
+ここまでで、 `new`を付けて呼び出した場合と` new`を付けずに呼び出した場合の違いをおおまかに理解できるはずです。
+
+|            | `new Person()`                  | `Person()`                           |
+| ---------- | ------------------------------- | ------------------------------------ |
+| `class`    | ✅ `this` is a `Person` instance | 🔴 `TypeError`                       |
+| `function` | ✅ `this` is a `Person` instance | 😳 `this` is `window` or `undefined` |
+
+そのため、Reactがコンポーネントを正しく呼び出すことが重要です。 **あなたのコンポーネントがクラスとして定義されている場合、Reactはそれを呼び出すときに `new`を使う必要があります。**
+
+それでReactは何かがクラスであるかどうかを単にチェックすることができますか？
+
+そう簡単ではありません！[JavaScriptの関数からクラスを見分ける]((https://stackoverflow.com/questions/29093396/how-do-you-check-the-difference-between-an-ecmascript-6-class-and-function))ことができたとしても、
+これはまだBabelのようなツールで処理されたクラスにはうまくいかないでしょう。ブラウザにとっては、それらは単なる普通の関数です。 Reactは頑張ってください。
 
 ---
 
-By now, you should roughly understand the difference between calling something with `new` or without `new`:
+OK,もしかしたらReactは全ての呼び出しに`new`を使えばいい？残念なことに、それは常に正しく動くとは限りません。
 
-`new Person()`
+通常の関数では、それらを `new`で呼び出すと、それらに` this`としてオブジェクトインスタンスが与えられます。
+これはコンストラクタとして書かれた関数（上記の `Person`のように）には望ましいですが、関数のコンポーネントには混乱を招くでしょう：
 
-`Person()`
+```javascript
+  function Greeting() {
+    // ここで `this`が他の種類のインスタンスであるとも思わないでしょう
+    return <p>Hello</p>;
+  }
+```
 
-`class`
-
-✅ `this` is a `Person` instance
-
-🔴 `TypeError`
-
-`function`
-
-✅ `this` is a `Person` instance
-
-😳 `this` is `window` or `undefined`
-
-This is why it’s important for React to call your component correctly. **If your component is defined as a class, React needs to use `new` when calling it.**
-
-So can React just check if something is a class or not?
-
-Not so easy! Even if we could [tell a class from a function in JavaScript](https://stackoverflow.com/questions/29093396/how-do-you-check-the-difference-between-an-ecmascript-6-class-and-function), this still wouldn’t work for classes processed by tools like Babel. To the browser, they’re just plain functions. Tough luck for React.
-
----
-
-Okay, so maybe React could just use `new` on every call? Unfortunately, that doesn’t always work either.
-
-With regular functions, calling them with `new` would give them an object instance as `this`. It’s desirable for functions written as constructor (like our `Person` above), but it would be confusing for function components:
-
-    function Greeting() {
-      // We wouldn’t expect `this` to be any kind of instance here
-      return <p>Hello</p>;
-    }
-
-That could be tolerable though. There are two _other_ reasons that kill this idea.
+それは許容できるかもしれません。 この考えを殺すのには他に2つの理由があります。
 
 ---
 
 The first reason why always using `new` wouldn’t work is that for native arrow functions (not the ones compiled by Babel), calling with `new` throws an error:
+常に`new`を使用してもうまくいかない最初の理由は、ネイティブのarrow関数（Babelによってコンパイルされたものではない）では、`new`を指定して呼び出すとエラーが発生するためです。
 
-    const Greeting = () => <p>Hello</p>;
-    new Greeting(); // 🔴 Greeting is not a constructor
+```javascript
+  const Greeting = () => <p>Hello</p>;
+  new Greeting(); // 🔴 Greeting is not a constructor
+```
 
-This behavior is intentional and follows from the design of arrow functions. One of the main perks of arrow functions is that they _don’t_ have their own `this` value — instead, `this` is resolved from the closest regular function:
+この動作は意図的なもので、arrow関数の設計に基づいています。
+arrow関数の主な利点の1つは、それらが独自の `this`値を持たないということです - 代わりに、`this`は最も近い通常の関数から解決されます。
 
-    class Friends extends React.Component {
-      render() {    const friends = this.props.friends;
-        return friends.map(friend =>
-          <Friend
-            // `this` is resolved from the `render` method        size={this.props.size}        name={friend.name}
-            key={friend.id}
-          />
-        );
-      }
+
+```javascript
+  class Friends extends React.Component {
+    render() {
+      const friends = this.props.friends;
+      return friends.map(friend =>
+        <Friend
+          // `this`は` render`メソッドから解決されます
+          size={this.props.size}
+          name={friend.name}
+          key={friend.id}
+        />
+      );
     }
+  }
+```
 
-Okay, so **arrow functions don’t have their own `this`.** But that means they would be entirely useless as constructors!
+さて、それで**arrow関数はそれ自身の `this`を持っていません**しかしそれはそれらがコンストラクタとして全く役に立たないことを意味します！
 
-    const Person = (name) => {
-      // 🔴 This wouldn’t make sense!
-      this.name = name;
-    }
+```javascript
+  const Person = (name) => {
+    // 🔴 これは意味がない！
+    this.name = name;
+  }
+```
 
 Therefore, **JavaScript disallows calling an arrow function with `new`.** If you do it, you probably made a mistake anyway, and it’s best to tell you early. This is similar to how JavaScript doesn’t let you call a class _without_ `new`.
+そのため、**JavaScriptでは `new`を使用してarrow関数を呼び出すことはできません。**これを実行した場合は、間違いを犯している可能性があります。
+これは、JavaScriptがクラスを`new`無しで呼び出せないのと似ています。
 
-This is nice but it also foils our plan. React can’t just call `new` on everything because it would break arrow functions! We could try detecting arrow functions specifically by their lack of `prototype`, and not `new` just them:
+これは素晴らしいことですが、それはまた私たちの計画を打ち立てます。 Reactはすべてのものに対して `new`を呼び出すだけでは不可能です。arrow関数が壊れるから！
+しかし、`prototype`の欠如によってarrow関数を検出を試みることができます、そしてそれらに`new`はつきません。
 
-    (() => {}).prototype // undefined
-    (function() {}).prototype // {constructor: f}
+```javascript
+  (() => {}).prototype // undefined
+  (function() {}).prototype // {constructor: f}
+```
 
-But this [wouldn’t work](https://github.com/facebook/react/issues/4599#issuecomment-136562930) for functions compiled with Babel. This might not be a big deal, but there is another reason that makes this approach a dead end.
+But this  for functions compiled with Babel. 
+しかしこれはBabelでコンパイルされた関数には[うまく動きません。](https://github.com/facebook/react/issues/4599#issuecomment-136562930)
+これは大したことではないかもしれませんが、このアプローチを行き止まりにするもう1つの理由があります。
 
 ---
 
-Another reason we can’t always use `new` is that it would preclude React from supporting components that return strings or other primitive types.
+常に`new`を使うことができないもう一つの理由は、Reactが文字列や他のプリミティブ型を返すコンポーネントをサポートすることを妨げるということです。
 
-    function Greeting() {
-      return 'Hello';
+```javascript
+  function Greeting() {
+    return 'Hello';
+  }
+  
+  Greeting(); // ✅ 'Hello'
+  new Greeting(); // 😳 Greeting {}
+```
+
+これもまた、[`new`演算子]（https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/new）設計に関係しています。 前に見たように、 `new`はJavaScriptエンジンにオブジェクトを作成し、そのオブジェクトを関数の中での`this`にし、そして後で `new`の結果としてそのオブジェクトを渡すように伝えます。
+
+しかしながら、JavaScriptでは、他のオブジェクトを返すことによって、`new`で呼び出された関数が`new`の戻り値をオーバーライドすることもできます。
+おそらく、これはインスタンスを再利用したい場合のプーリングのようなパターンに役立つと考えられていました。
+
+```javascript
+  // 遅延作成
+  var zeroVector = null;
+  
+  function Vector(x, y) {
+    if (x === 0 && y === 0) {
+      if (zeroVector !== null) {
+        // Reuse the same instance      return zeroVector;    }
+      zeroVector = this;
     }
-    
-    Greeting(); // ✅ 'Hello'
-    new Greeting(); // 😳 Greeting {}
+    this.x = x;
+    this.y = y;
+  }
+  
+  var a = new Vector(1, 1);
+  var b = new Vector(0, 0);
+  var c = new Vector(0, 0); // 😲 b === c
+```
 
-This, again, has to do with the quirks of the [`new` operator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/new) design. As we saw earlier, `new` tells the JavaScript engine to create an object, make that object `this` inside the function, and later give us that object as a result of `new`.
+ただし、関数がオブジェクトではない場合、`new`は関数の戻り値を完全に無視します。 あなたが文字列や数字を返す場合、それは `return`がまったくなかったようです。
 
-However, JavaScript also allows a function called with `new` to _override_ the return value of `new` by returning some other object. Presumably, this was considered useful for patterns like pooling where we want to reuse instances:
-
-    // Created lazilyvar zeroVector = null;
-    function Vector(x, y) {
-      if (x === 0 && y === 0) {
-        if (zeroVector !== null) {
-          // Reuse the same instance      return zeroVector;    }
-        zeroVector = this;
-      }
-      this.x = x;
-      this.y = y;
-    }
-    
-    var a = new Vector(1, 1);
-    var b = new Vector(0, 0);var c = new Vector(0, 0); // 😲 b === c
-
-However, `new` also _completely ignores_ a function’s return value if it’s _not_ an object. If you return a string or a number, it’s like there was no `return` at all.
-
-    function Answer() {
-      return 42;
-    }
-    
-    Answer(); // ✅ 42
-    new Answer(); // 😳 Answer {}
+```javascript
+  function Answer() {
+    return 42;
+  }
+  
+  Answer(); // ✅ 42
+  new Answer(); // 😳 Answer {}
+```
 
 There is just no way to read a primitive return value (like a number or a string) from a function when calling it with `new`. So if React always used `new`, it would be unable to add support components that return strings!
 
