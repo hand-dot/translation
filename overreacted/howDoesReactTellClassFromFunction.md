@@ -524,6 +524,7 @@ Javascriptでは全てのオブジェクトは“prototype”を持っていま�
 ```
 
 そしてこのチェックは、Reactコンポーネントクラスなのか通常の関数なのかを判断する方法です。
+
 ---
 
 しかしこれはReactがすることではありません。 😳
@@ -577,6 +578,7 @@ You might be wondering why it’s an object and not just a boolean. It doesn’t
 今、あなたは`Cannot call a class as a function`のエラーに対する[最も支持された答え](https://stackoverflow.com/questions/38481857/getting-cannot-call-a-class-as-a-function-in-my-react-project/42680526#42680526)が`extends React.Component`を追加することである理由はわかりますね。
 最後に、`prototype.render`が存在するが` prototype.isReactComponent`が存在しない場合に警告する警告が追加されました。
 
+---
 
 もしかしたらあなたはこの物語が引っ掛けだと言うかもしれません。
 **実際の解決策は非常に単純ですが、Reactがこの解決策を採用した理由とその代替案について説明するために、話を大きく脱線しました。**
