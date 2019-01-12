@@ -69,7 +69,7 @@ Reactはclassとしての定義もサポートしています
 
 このブログはReactがなぜこのように動いているのか知りたい好奇心の強い読者向けです。あなたはそのような人ですか？一緒に深掘りしてみましょう。
 
-**これは長い旅です。ベルトを締めてください。その投稿はReact自身についての十分な情報は持っていません。しかし、Javascriptで`new`, `this`, `class`, arrow functions, `prototype`, `__proto__`,`instanceof`のこれらがどのように機能するか説明します。幸運にもReactを使う時は、これらのことを考える必要がありませんでした。もしあなたがReactを実装しているなら...**
+**これは長い旅です。ベルトを締めてください。その投稿はReact自身についての十分な情報は持っていません。しかし、Javascriptで`new`, `this`, `class`, `arrow functions`, `prototype`, `__proto__`,`instanceof`のこれらがどのように機能するか説明します。幸運にもReactを使う時は、これらのことを考える必要がありませんでした。**
 
 答えを知りたいだけなら最後までスクロールしてください。
 
@@ -105,7 +105,7 @@ JavaScriptで `new`演算子がすることの大まかな意味を理解しま�
   var george = Person('George'); // 🔴 動かない
 ```
 
-今日でもこんなコードを書くことができます!DevToolsで試してみてください。
+今日でもこんなコードを書くことができます! DevToolsで試してみてください。
 
 もし `Person('Fred')` を `new`なしで呼び出したら、その中の`this`はグローバルで無用なものを指すでしょう。(例えば `windows`や`undefined`)
 だから、そのコードはクラッシュしたり、`window.name`に設定するような愚かなことをするでしょう。
@@ -113,7 +113,7 @@ JavaScriptで `new`演算子がすることの大まかな意味を理解しま�
 
 呼び出しの前に`new`を追加することで、私たちはこう言います。
 「やあJavascript、`Person`は単なる関数だってことは知っている。だけど、それをクラスコンストラクタのようなものにしよう。
-**オブジェクト(`{}`)を作成し、`Person`関数内で`this`はそのオブジェクトを指すようにして、`this.name`に値を割り当てる。その後そのオブジェクトを返してください。**」
+**オブジェクト(`{}`)を作成し、`Person`関数内で`this`はそのオブジェクトを指すようにして、`this.name`に値を割り当てる。その後そのオブジェクトを返してほしいんだ。**」
 
 
 それが`new`演算子がすることです。
@@ -122,8 +122,7 @@ JavaScriptで `new`演算子がすることの大まかな意味を理解しま�
   var fred = new Person('Fred'); // `Person`の中の`this`と同じオブジェクト 
 ```
 
-The `new` operator also makes anything we put on `Person.prototype` available on the `fred` object:
-`new`演算子は`Person.prototype`に追加したもの全てを`fred`オブジェクトで使えるようにします。
+`new`演算子は`Person.prototype`に追加したもの全てを`fred`オブジェクトで使えるようにします。:
 
 ```javascript
   function Person(name) {
@@ -134,7 +133,7 @@ The `new` operator also makes anything we put on `Person.prototype` available on
   fred.sayHi();
 ```
 
-これはJavascriptが直接クラスを追加する前にクラスをエミュレートする方法です。
+これはJavascriptがクラスをエミュレートする方法です。
 
 ---
 
@@ -176,9 +175,8 @@ The `new` operator also makes anything we put on `Person.prototype` available on
 これは、`this.name`が` george.name`ではなく`window.name`として扱われるようなあいまいなバグを待つのではなく、早い段階でミスを見つけるのに役立ちます。
 
 
-However, it means that React needs to put `new` before calling any class. It can’t just call it as a regular function, as JavaScript would treat it as an error!
 しかしながらそれはReactはどんなクラスでも`new`を書かないといけないということを意味します。
-Javascriptはそれをエラーとして扱うので、普通の関数を単に呼び出せない。
+Javascriptはそれをエラーとして扱うので、普通の関数を単に呼び出せない!
 
 ```javascript
   class Counter extends React.Component {
@@ -195,7 +193,7 @@ Javascriptはそれをエラーとして扱うので、普通の関数を単に�
 
 ---
 
-Reactがこれをどうやって解決するかを見る前に、Reactを使うほとんどの人がBabelのようなコンパイラを使って古いブラウザのためにクラスのような機能をコンパイルしていることを覚えておくことが重要です。だから我々は私たちのデザインでコンパイラを考慮する必要があります。
+Reactがこれをどうやって解決するかを見る前に、Reactを使うほとんどの人がBabelのようなコンパイラを使って古いブラウザのためにクラスのような機能をコンパイルしていることを覚えておくことが重要です。だから我々はReactを作る上での設計でコンパイラを考慮する必要があります。
 
 Babelの初期のバージョンはクラスは`new`なしで呼び出すことができました。しかし、これは下記のコードを生成することで修正されました。
 
@@ -212,9 +210,10 @@ Babelの初期のバージョンはクラスは`new`なしで呼び出すこと�
   new Person('Fred'); // ✅ OK
   Person('George');   // 🔴 Cannot call a class as a function
 ```
+
 もしかしたらバンドルされたコード中で`_classCallCheck`というコードをみたことがあるかもしれません。上記の例がそれです。
-(チェックなしで「ルーズモード」を選択することによってバンドルサイズを減らすことができますが、これは実際のネイティブクラスへの最終的な移行を複雑にするかもしれません。)
 (ルーズモードのオプションでバンドルサイズを減らすことができますが、最終的にネイティブのクラスへの移行を複雑にするかもしれません。)
+
 ---
 
 ここまでで、 `new`を付けて呼び出した場合と` new`を付けずに呼び出した場合の違いをおおまかに理解できるはずです。
