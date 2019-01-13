@@ -1,4 +1,4 @@
-# setStateはどうやって何をするか知る？
+# setStateはどうやって何をすべきか判断するの？
 
 以下は[How Does setState Know What to Do?](https://overreacted.io/how-does-setstate-know-what-to-do/)  の日本語訳です。
 
@@ -69,18 +69,23 @@ React DOM、React DOMサーバー、Reactネイティブのいずれを実行し
 対照的に、レンダラパッケージはReact階層をDOMノードにマウントすることを可能にする `ReactDOM.render()`のようなプラットフォーム特有のAPIを公開します。各レンダラーはこのようなAPIを提供しま
 理想的には、ほとんどのコンポーネントはレンダラーから何かをインポートする必要はありません。 これにより、移植性が高まります。
 
-**What most people imagine as the React “engine” is inside each individual renderer.** Many renderers include a copy of the same code — we call it the [“reconciler”](https://github.com/facebook/react/tree/master/packages/react-reconciler). A [build step](https://reactjs.org/blog/2017/12/15/improving-the-repository-infrastructure.html#migrating-to-google-closure-compiler) smooshes the reconciler code together with the renderer code into a single highly optimized bundle for better performance. (Copying code is usually not great for bundle size but the vast majority of React users only needs one renderer at a time, such as `react-dom`.)
+**ほとんどの人がReactの「エンジン」として想像しているのは、個々のレンダラーの内部にあります。**
+多くのレンダラーには同じコードのコピーが含まれています - これを["reconciler"](https://github.com/facebook/react/tree/master/packages/react-reconciler)と呼びます。 [ビルドステップ](https://reactjs.org/blog/2017/12/15/improving-the-repository-infrastructure.html#migrating-to-google-closure-compiler) では、reconcilerのコードとレンダラーコードをスムーズにまとめて、パフォーマンスを向上させるための高度に最適化された単一のバンドルにします。
+(コードのコピーはバンドルサイズには通常良いものではありませんが、Reactユーザーの大多数は一度に1つのレンダラーしか必要としません（例えば `react-dom`)
 
-The takeaway here is that the `react` package only lets you _use_ React features but doesn’t know anything about _how_ they’re implemented. The renderer packages (`react-dom`, `react-native`, etc) provide the implementation of React features and platform-specific logic. Some of that code is shared (“reconciler”) but that’s an implementation detail of individual renderers.
+ここで重要なのは、 `react`パッケージはReactの機能を使うだけで、実装されている方法については何も知らないということです。
+レンダラパッケージ（ `react-dom`、` react-native`など）はReact機能とプラットフォーム固有のロジックの実装を提供します。
+そのコードの一部は共有されていますが("reconciler")、個々のレンダラーの実装の詳細です。
 
 ---
 
-Now we know why _both_ `react` and `react-dom` packages need to be updated for new features. For example, when React 16.3 added the Context API, `React.createContext()` was exposed on the React package.
+これで新機能のために `react`と`react-dom`パッケージの両方を更新する必要がある理由がわかりましたね。
+例えば、React 16.3がContext APIを追加したとき、 `React.createContext()`がReactパッケージに公開されました。
 
-But `React.createContext()` doesn’t actually _implement_ the context feature. The implementation would need to be different between React DOM and React DOM Server, for example. So `createContext()` returns a few plain objects:
+しかし `React.createContext()`は実際にはコンテキスト機能を実装していません。 たとえば、React DOMとReact DOM Serverでは実装が異なる必要があります。 そのため `createContext()`はいくつかのプレーンなオブジェクトを返します。
 
 ```js
-// A bit simplified
+// 少し簡略化しています
 function createContext(defaultValue) {
   let context = {
     _currentValue: defaultValue,
@@ -99,59 +104,77 @@ function createContext(defaultValue) {
 }
 ```
 
-When you use `<MyContext.Provider>` or `<MyContext.Consumer>` in the code, it’s the _renderer_ that decides how to handle them. React DOM might track context values in one way, but React DOM Server might do it differently.
+コード内で`<MyContext.Provider>`または`<MyContext.Consumer>`を使用する場合、それらをどのように処理するかを決定するのはレンダラーです。
+React DOMはある方法でコンテキスト値を追跡するかもしれませんが、React DOM Serverはそれを別の方法で行うかもしれません。
 
-**So if you update `react` to 16.3+ but don’t update `react-dom`, you’d be using a renderer that isn’t yet aware of the special `Provider` and `Consumer` types.** This is why an older `react-dom` would [fail saying these types are invalid](https://stackoverflow.com/a/49677020/458193).
 
-The same caveat applies to React Native. However, unlike React DOM, a React release doesn’t immediately “force” a React Native release. They have an independent release schedule. The updated renderer code is [separately synced](https://github.com/facebook/react-native/commits/master/Libraries/Renderer/oss) into the React Native repository once in a few weeks. This is why features become available in React Native on a different schedule than in React DOM.
+**したがって、「react」を16.3以降に更新しても、「react-dom」を更新しない場合は、特別な「Provider」型と「Consumer」型をまだ認識していないレンダラーを使用することになります。**
+
+これが、古い `react-dom`が[これらの型が無効だと言って失敗](https://stackoverflow.com/a/49677020/458193)する理由です。
+
+同じ警告がReact Nativeにも当てはまります。 ただし、React DOMとは異なり、ReactリリースはすぐにはReact Nativeリリースを「強制」しません。独立したリリーススケジュールを持っています。
+
+更新されたレンダラーコードは、数週間に1回、React Nativeリポジトリに[個別に同期](https://github.com/facebook/react-native/commits/master/Libraries/Renderer/oss)されます。
+これが、React DOMとは異なるスケジュールでReact Nativeの機能が利用可能になる理由です。
 
 ---
 
-Okay, so now we know that the `react` package doesn’t contain anything interesting, and the implementation lives in renderers like `react-dom`, `react-native`, and so on. But that doesn’t answer our question. How does `setState()` inside `React.Component` “talk” to the right renderer?
+さて、これで `react`パッケージにはおもしろいものは何も含まれていないってことがわかりましたね。そして実装は`react-dom`や `react-native`のようなレンダラーにあります。
 
-**The answer is that every renderer sets a special field on the created class.** This field is called `updater`. It’s not something _you_ would set — rather, it’s something React DOM, React DOM Server or React Native set right after creating an instance of your class:
+しかし、これでは質問に答えていませんね。 `React.Component`内の` setState()`はどのようにして正しいレンダラーと「対話」しますか？
+
+**答えは、すべてのレンダラーが作成されたクラスに特定のフィールドを設定することです。**このフィールドは「updater」と呼ばれています。
+それはあなたが設定するものではありません - むしろ、それはあなたのクラスのインスタンスを作成した直後にReact React DOM ServerまたはReact Nativeがセットするものです：
 
 ```js
-// Inside React DOM
+// React DOM 内部
 const inst = new YourComponent();
 inst.props = props;
 inst.updater = ReactDOMUpdater;
-// Inside React DOM Server
+// React DOM Server 内部
 const inst = new YourComponent();
 inst.props = props;
 inst.updater = ReactDOMServerUpdater;
-// Inside React Native
+// React Native 内部
 const inst = new YourComponent();
 inst.props = props;
 inst.updater = ReactNativeUpdater;
 ```
 
-Looking at the [`setState` implementation in `React.Component`](https://github.com/facebook/react/blob/ce43a8cd07c355647922480977b46713bd51883e/packages/react/src/ReactBaseClasses.js#L58-L67), all it does is delegate work to the renderer that created this component instance:
+[`React.Component`の`setState`の実装](https://github.com/facebook/react/blob/ce43a8cd07c355647922480977b46713bd51883e/packages/react/src/ReactBaseClasses.js#L58-L67)を見てください。
 
-    // A bit simplified
-    setState(partialState, callback) {
-      // Use the `updater` field to talk back to the renderer!
-      this.updater.enqueueSetState(this, partialState, callback);
-    }
-
-React DOM Server [might want to](https://github.com/facebook/react/blob/ce43a8cd07c355647922480977b46713bd51883e/packages/react-dom/src/server/ReactPartialRenderer.js#L442-L448) ignore a state update and warn you, whereas React DOM and React Native would let their copies of the reconciler [handle it](https://github.com/facebook/react/blob/ce43a8cd07c355647922480977b46713bd51883e/packages/react-reconciler/src/ReactFiberClassComponent.js#L190-L207).
-
-And this is how `this.setState()` can update the DOM even though it’s defined in the React package. It reads `this.updater` which was set by React DOM, and lets React DOM schedule and handle the update.
-
----
-
-We know about classes now, but what about Hooks?
-
-When people first look at the [Hooks proposal API](https://reactjs.org/docs/hooks-intro.html), they often wonder: how does `useState` “know what to do”? The assumption is that it’s more “magical” than a base `React.Component` class with `this.setState()`.
-
-But as we have seen today, the base class `setState()` implementation has been an illusion all along. It doesn’t do anything except forwarding the call to the current renderer. And `useState` Hook [does exactly the same thing](https://github.com/facebook/react/blob/ce43a8cd07c355647922480977b46713bd51883e/packages/react/src/ReactHooks.js#L55-L56).
-
-**Instead of an `updater` field, Hooks use a “dispatcher” object.** When you call `React.useState()`, `React.useEffect()`, or another built-in Hook, these calls are forwarded to the current dispatcher.
+このコンポーネントインスタンスを作成したレンダラーに作業を委任するだけです。
 
 ```js
-// In React (simplified a bit)
+// 少し簡略化しています
+setState(partialState, callback) {
+  // レンダラーと「対話」するには `updater`フィールドを使って!
+  this.updater.enqueueSetState(this, partialState, callback);
+}
+```
+
+React DOMサーバーは状態の更新を無視して[警告したいかもしれません。](https://github.com/facebook/react/blob/ce43a8cd07c355647922480977b46713bd51883e/packages/react-dom/src/server/ReactPartialRenderer.js#L442-L448) 一方、React DOMとReact Nativeはそれらの"reconciler"のコピーにそれを[処理させる](https://github.com/facebook/react/blob/ce43a8cd07c355647922480977b46713bd51883e/packages/react-reconciler/src/ReactFiberClassComponent.js#L190-L207)でしょう。
+
+
+これが、Reactパッケージで定義されている場合でも、`this.setState()`がDOMを更新する方法です。
+
+React DOMによって設定された `this.updater`を読み、React DOMに更新をスケジュールさせ処理させます。
+---
+
+クラスについてはわかりましたが、フックについてはどうですか?
+
+初めて[Hooks proposal API](https://reactjs.org/docs/hooks-intro.html)を見たとき、しばしば疑問に思うようです「`useState`はどのようにしたらよいのでしょうか?」仮定は、これが `this.setState()`を使った`React.Component`クラスよりも「魔法的」であることです。
+しかし、今日見たように、クラスの`setState()`の実装は初めからずっと「幻想的」です。 現在のレンダラーを呼び出すこと以外は何もしません。
+
+そして `useState`フックは[全く同じことをします。](https://github.com/facebook/react/blob/ce43a8cd07c355647922480977b46713bd51883e/packages/react/src/ReactHooks.js#L55-L56)
+
+**`updater`フィールドの代わりに、フックは"dispatcher"オブジェクトを使います。**
+`React.useState()`,`React.useEffect()`、あるいは他の組み込みHookを呼び出すと、これらの呼び出しは現在のディスパッチャに転送されます。
+
+```js
+// React内 (少し簡略化)
 const React = {
-  // Real property is hidden a bit deeper, see if you can find it!
+  // 本当のプロパティはもう少し深くに隠されています。見つけられたら見てください！
   __currentDispatcher: null,
 
   useState(initialState) {
@@ -164,32 +187,38 @@ const React = {
   // ...
 };
 ```
-
-And individual renderers set the dispatcher before rendering your component:
+そして個々のレンダラーはコンポーネントをレンダリングする前にディスパッチャーを設定します：
 
 ```js
-// In React DOM
+// React DOM内
 const prevDispatcher = React.__currentDispatcher;
 React.__currentDispatcher = ReactDOMDispatcher;
 let result;
 try {
   result = YourComponent(props);
 } finally {
-  // Restore it back
+  // 元に戻す
   React.__currentDispatcher = prevDispatcher;
 }
 ```
 
-For example, the React DOM Server implementation is [here](https://github.com/facebook/react/blob/ce43a8cd07c355647922480977b46713bd51883e/packages/react-dom/src/server/ReactPartialRendererHooks.js#L340-L354), and the reconciler implementation shared by React DOM and React Native is [here](https://github.com/facebook/react/blob/ce43a8cd07c355647922480977b46713bd51883e/packages/react-reconciler/src/ReactFiberHooks.js).
+例えば、React DOM Serverの実装は[こちら](https://github.com/facebook/react/blob/ce43a8cd07c355647922480977b46713bd51883e/packages/react-dom/src/server/ReactPartialRendererHooks.js#L340-L354)です。
+そしてReact DOMとReact Nativeが共有する"reconciler"の実装は[ここ](https://github.com/facebook/react/blob/ce43a8cd07c355647922480977b46713bd51883e/packages/react-reconciler/src/ReactFiberHooks.js)です。
 
-This is why a renderer such as `react-dom` needs to access the same `react` package that you call Hooks from. Otherwise, your component won’t “see” the dispatcher! This may not work when you have [multiple copies of React](https://github.com/facebook/react/issues/13991) in the same component tree. However, this has always led to obscure bugs so Hooks force you to solve the package duplication before it costs you.
+これが `react-dom`のようなレンダラーがHooksを呼ぶのと同じ`react`パッケージにアクセスする理由です。
+そうでなければ、あなたのコンポーネントはディスパッチャーを「見る」ことができません！
+同じコンポーネントツリーに[複数のReactのコピー](https://github.com/facebook/react/issues/13991)がある場合、これはうまく機能しない可能性があります。しかし、これは常にあいまいなバグを引き起こすので、Hooksはパッケージの重複を解決することを強制します。
 
-While we don’t encourage this, you can technically override the dispatcher yourself for advanced tooling use cases. (I lied about `__currentDispatcher` name but you can find the real one in the React repo.) For example, React DevTools will use [a special purpose-built dispatcher](https://github.com/facebook/react/blob/ce43a8cd07c355647922480977b46713bd51883e/packages/react-debug-tools/src/ReactDebugHooks.js#L203-L214) to introspect the Hooks tree by capturing JavaScript stack traces. _Don’t repeat this at home._
+これはお勧めできませんが、高度なツールのユースケースでは、技術的にディスパッチャを上書きすることができます。(`__currentDispatcher`の名前について嘘をつきましたが、本物をReactリポジトリで見つけることができます。)例えばReact DevToolsは[特定のディスパッチャ](https://github.com/facebook/react/blob/ce43a8cd07c355647922480977b46713bd51883e/packages/react-debug-tools/src/ReactDebugHooks.js#L203-L214)を使用してJavaScriptのスタックトレースのキャプチャによってHooksツリーを観察します。_良い子は真似しないでください_
 
-This also means Hooks aren’t inherently tied to React. If in the future more libraries want to reuse the same primitive Hooks, in theory the dispatcher could move to a separate package and be exposed as a first-class API with a less “scary” name. In practice, we’d prefer to avoid premature abstraction until there is a need for it.
+これは、フックが本質的にReactと結び付いていないことも意味します。 将来もっと多くのライブラリが同じ原始的なフックを再利用したいならば、
+理論的には、ディスパッチャーは別のパッケージに移動し、「怖くない」名前のファーストクラスAPIとして公開される可能性があります。
+実際には、それが必要になるまで早期の抽象化を避けたいと思います。
 
-Both the `updater` field and the `__currentDispatcher` object are forms of a generic programming principle called _dependency injection_. In both cases, the renderers “inject” implementations of features like `setState` into the generic React package to keep your components more declarative.
+`updater`フィールドと`__currentDispatcher`オブジェクトはどちらも _dependency injection_ と呼ばれる一般的なプログラミング原則の形式です。 どちらの場合も、レンダラーは `setState`のような機能の実装を一般的なReactパッケージに「注入」して、コンポーネントの宣言性を高めます。
 
-You don’t need to think about how this works when you use React. We’d like React users to spend more time thinking about their application code than abstract concepts like dependency injection. But if you’ve ever wondered how `this.setState()` or `useState()` know what to do, I hope this helps.
+Reactを使うときにこれがどのように機能するかを考える必要はありません。
+_dependency injection_ のような抽象的な概念よりも、Reactユーザーは自分のアプリケーションのコードについてもっと時間をかけて欲しいと思います。
+しかし、`this.setState()`や`useState()`がどうすればよいのかを疑問に思ったことがあるなら、これが役に立つことを願っています。
 
 ---
