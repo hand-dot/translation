@@ -32,13 +32,15 @@ ReactDOM.render(<Button />, document.getElementById('container'));
 ```  
 
 そう、次の `{clicked：true}`の状態でReactはコンポーネントを再レンダリングし、返された `<h1> Thanks </h1>`要素と一致するようにDOMを更新します。
+
 簡単そうに見えますね。しかし、待ってください _React_ がしますか？それとも _React DOM_ ？
-DOMを更新することは、React DOMの責務のように思えます。
-しかし、React DOMのものではない、`this.setState()`を呼び出しています。 そして私たちの `React.Component`クラスはReactの内部で定義されています。
 
-それでは、どのようにして `React.Component`内の` setState()`がDOMを更新することができるのでしょうか。
 
-**免責事項：このブログの他のほとんど([これとか](https://overreacted.io/why-do-react-elements-have-typeof-property/)[これとか](https://overreacted.io/how-does-react-tell-a-class-from-a-function/)[これ](https://overreacted.io/why-do-we-write-super-props/))の投稿と同じように、Reactを効率的に使うために実際に知っておく必要はありません。この記事は、カーテンの裏に何があるのかを知りたい人のためのものです。 完全にオプション！**
+DOMを更新することは、React DOMの責務のように思えます。しかし、React DOMのものではない、`this.setState()`を呼び出しています。 そして私たちの `React.Component`クラスはReactの内部で定義されています。
+
+ならどうやって `React.Component`内の` setState()`がDOMを更新することができるのでしょうか。
+
+**免責事項：このブログの他のほとんど([これとか](https://overreacted.io/why-do-react-elements-have-typeof-property/), [これとか](https://overreacted.io/how-does-react-tell-a-class-from-a-function/), [これ](https://overreacted.io/why-do-we-write-super-props/))の投稿と同じように、Reactを効率的に使うために実際に知っておく必要はありません。この記事は、カーテンの裏に何があるのかを知りたい人のためのものです。 完全にオプション！**
 
 ---
 
@@ -49,10 +51,10 @@ DOMを更新することは、React DOMの責務のように思えます。
 
 React Test RendererまたはShallow Rendererについてもお詳しいかもしれませんが、 どちらのテスト方法でも通常のコンポーネントをレンダリングしてその中で `this.setState()`を呼び出すことができますがどちらもDOMとは連携できません。
 
-[React ART](https://github.com/facebook/react/tree/master/packages/react-art)のようなレンダラーを使用した場合は、ページ上で複数のレンダラーを使用することが可能であることもわかります。 （たとえば、ARTコンポーネントはReact DOMツリー内で機能します。）これにより、グローバルフラグまたは変数が保持できなくなります。
+[React ART](https://github.com/facebook/react/tree/master/packages/react-art)のようなレンダラーを使用した場合は、ページ上で複数のレンダラーを使用することが可能です。(たとえば、ARTコンポーネントはReact DOMツリー内で機能します。)これにより、グローバルフラグまたは変数が保持できなくなります。
 
 
-だからどういうわけか **`React.Component`は状態の更新を扱うことをプラットフォーム固有のコードに委任します。** これがどのように起こるかを理解する前に、パッケージがどのように分離されるかそしてその理由を深く掘り下げましょう。
+だからどういうわけか **`React.Component`は状態の更新を扱うことをプラットフォーム固有のコードに委任します。** これがどのように起こるかを理解する前にパッケージがどのように分離されるか、そしてその理由を深く掘り下げましょう。
 
 ---
 
@@ -62,11 +64,9 @@ Reactの「エンジン」は `react`パッケージの中にあるという一�
 
 `react-dom`、` react-dom / server`、 `react-native`、` react-test-renderer`、 `react-art`はレンダラーの例です（そして[自分で作ることもできます](https://github.com/facebook/react/blob/master/packages/react-reconciler/README.md#practical-examples)）。
 
-これはあなたがどのプラットフォームをターゲットにしているかに関わらず `react`パッケージが便利だからです。 すべてのエクスポートは以下のとおりです。`React.Component`、` React.createElement`、 `React.Children` そして（最終的には）[Hooks](https://reactjs.org/docs/hooks-intro.html) これらはターゲットプラットフォームから独立しています。
+これはあなたがどのプラットフォームをターゲットにしているかに関わらず `react`パッケージが便利だからです。 すべてのエクスポートは以下のとおりです。`React.Component`、` React.createElement`、 `React.Children` そして（最終的には）[Hooks](https://reactjs.org/docs/hooks-intro.html) これらはターゲットプラットフォームから独立しています。React DOM、React DOM Server、React Nativeのいずれを実行しても、コンポーネントはインポートして同じ方法で使用します。
 
-React DOM、React DOMサーバー、Reactネイティブのいずれを実行しても、コンポーネントはインポートして同じ方法で使用します。
-
-対照的に、レンダラパッケージはReact階層をDOMノードにマウントすることを可能にする `ReactDOM.render()`のようなプラットフォーム特有のAPIを公開します。各レンダラーはこのようなAPIを提供しま
+対照的に、レンダラパッケージはReact階層をDOMノードにマウントすることを可能にする `ReactDOM.render()`のようなプラットフォーム特有のAPIを公開します。各レンダラーはこのようなAPIを提供します。
 理想的には、ほとんどのコンポーネントはレンダラーから何かをインポートする必要はありません。 これにより、移植性が高まります。
 
 **ほとんどの人がReactの「エンジン」として想像しているのは、個々のレンダラーの内部にあります。**
@@ -107,23 +107,16 @@ function createContext(defaultValue) {
 コード内で`<MyContext.Provider>`または`<MyContext.Consumer>`を使用する場合、それらをどのように処理するかを決定するのはレンダラーです。
 React DOMはある方法でコンテキスト値を追跡するかもしれませんが、React DOM Serverはそれを別の方法で行うかもしれません。
 
+**したがって、「react」を16.3以降に更新しても、「react-dom」を更新しない場合は、特別な「Provider」型と「Consumer」型をまだ認識していないレンダラーを使用することになります。**これが、古い `react-dom`が[これらの型が無効だと言って失敗](https://stackoverflow.com/a/49677020/458193)する理由です。
 
-**したがって、「react」を16.3以降に更新しても、「react-dom」を更新しない場合は、特別な「Provider」型と「Consumer」型をまだ認識していないレンダラーを使用することになります。**
-
-これが、古い `react-dom`が[これらの型が無効だと言って失敗](https://stackoverflow.com/a/49677020/458193)する理由です。
-
-同じ警告がReact Nativeにも当てはまります。 ただし、React DOMとは異なり、ReactリリースはすぐにはReact Nativeリリースを「強制」しません。独立したリリーススケジュールを持っています。
-
-更新されたレンダラーコードは、数週間に1回、React Nativeリポジトリに[個別に同期](https://github.com/facebook/react-native/commits/master/Libraries/Renderer/oss)されます。
+同じ警告がReact Nativeにも当てはまります。 ただし、React DOMとは異なり、ReactリリースはすぐにはReact Nativeリリースを「強制」しません。独立したリリーススケジュールを持っています。更新されたレンダラーコードは、数週間に1回、React Nativeリポジトリに[個別に同期](https://github.com/facebook/react-native/commits/master/Libraries/Renderer/oss)されます。
 これが、React DOMとは異なるスケジュールでReact Nativeの機能が利用可能になる理由です。
 
 ---
 
-さて、これで `react`パッケージにはおもしろいものは何も含まれていないってことがわかりましたね。そして実装は`react-dom`や `react-native`のようなレンダラーにあります。
+さて、これで `react`パッケージにはおもしろいものは何も含まれていないってことがわかりましたね。そして実装は`react-dom`や `react-native`のようなレンダラーにあります。しかし、これでは質問に答えていませんね。 `React.Component`内の` setState()`はどのようにして正しいレンダラーと「対話」しますか？
 
-しかし、これでは質問に答えていませんね。 `React.Component`内の` setState()`はどのようにして正しいレンダラーと「対話」しますか？
-
-**答えは、すべてのレンダラーが作成されたクラスに特定のフィールドを設定することです。**このフィールドは「updater」と呼ばれています。
+**答えは、すべてのレンダラーが、作成されたクラスに特別なフィールドを設定することです。** このフィールドは「updater」と呼ばれています。
 それはあなたが設定するものではありません - むしろ、それはあなたのクラスのインスタンスを作成した直後にReact React DOM ServerまたはReact Nativeがセットするものです：
 
 ```js
@@ -141,9 +134,7 @@ inst.props = props;
 inst.updater = ReactNativeUpdater;
 ```
 
-[`React.Component`の`setState`の実装](https://github.com/facebook/react/blob/ce43a8cd07c355647922480977b46713bd51883e/packages/react/src/ReactBaseClasses.js#L58-L67)を見てください。
-
-このコンポーネントインスタンスを作成したレンダラーに作業を委任するだけです。
+[`React.Component`の`setState`の実装](https://github.com/facebook/react/blob/ce43a8cd07c355647922480977b46713bd51883e/packages/react/src/ReactBaseClasses.js#L58-L67)を見てください。このコンポーネントインスタンスを作成したレンダラーに作業を委任するだけです。
 
 ```js
 // 少し簡略化しています
@@ -156,9 +147,8 @@ setState(partialState, callback) {
 React DOMサーバーは状態の更新を無視して[警告したいかもしれません。](https://github.com/facebook/react/blob/ce43a8cd07c355647922480977b46713bd51883e/packages/react-dom/src/server/ReactPartialRenderer.js#L442-L448) 一方、React DOMとReact Nativeはそれらの"reconciler"のコピーにそれを[処理させる](https://github.com/facebook/react/blob/ce43a8cd07c355647922480977b46713bd51883e/packages/react-reconciler/src/ReactFiberClassComponent.js#L190-L207)でしょう。
 
 
-これが、Reactパッケージで定義されている場合でも、`this.setState()`がDOMを更新する方法です。
+これが、Reactパッケージで定義されている場合でも、`this.setState()`がDOMを更新する方法です。React DOMによって設定された `this.updater`を読み、React DOMに更新をスケジュールさせ処理させます。
 
-React DOMによって設定された `this.updater`を読み、React DOMに更新をスケジュールさせ処理させます。
 ---
 
 クラスについてはわかりましたが、フックについてはどうですか?
@@ -213,12 +203,12 @@ try {
 
 これは、フックが本質的にReactと結び付いていないことも意味します。 将来もっと多くのライブラリが同じ原始的なフックを再利用したいならば、
 理論的には、ディスパッチャーは別のパッケージに移動し、「怖くない」名前のファーストクラスAPIとして公開される可能性があります。
-実際には、それが必要になるまで早期の抽象化を避けたいと思います。
+実際には、それが必要になるまで早期の抽象化は避けますが。
 
 `updater`フィールドと`__currentDispatcher`オブジェクトはどちらも _dependency injection_ と呼ばれる一般的なプログラミング原則の形式です。 どちらの場合も、レンダラーは `setState`のような機能の実装を一般的なReactパッケージに「注入」して、コンポーネントの宣言性を高めます。
 
 Reactを使うときにこれがどのように機能するかを考える必要はありません。
 _dependency injection_ のような抽象的な概念よりも、Reactユーザーは自分のアプリケーションのコードについてもっと時間をかけて欲しいと思います。
-しかし、`this.setState()`や`useState()`がどうすればよいのかを疑問に思ったことがあるなら、これが役に立つことを願っています。
+しかし、`this.setState()`や`useState()`がどうやって何をすべきか判断するのかを疑問に思ったことがあるなら、これが役に立つことを願っています。
 
 ---
