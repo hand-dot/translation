@@ -43,92 +43,136 @@ Reactを使ったことがあれば`type`, `props`, `key`,`ref`フィールド�
 
 ---
 
-Before client-side UI libraries became common and added basic protection, it was common for app code to construct HTML and insert it into the DOM:
+クライアントサイドのUIライブラリが一般的になる前はアプリケーションコードにHTMLを構築してDOMに挿入するのが一般的でした。
 
 ```js
 const messageEl = document.getElementById('message');
 messageEl.innerHTML = '<p>' + message.text + '</p>';
 ```
 
-That works fine, except when your `message.text` is something like `'<img src onerror="stealYourPassword()">'`. **You don’t want things written by strangers to appear verbatim in your app’s rendered HTML.**
+ `message.text`が` '<img src onerror = "stealYourPassword()">'`のようなものである場合を除いて、それは問題なく動作します。
 
-(Fun fact: if you only do client-side rendering, a `<script>` tag here wouldn’t let you run JavaScript. But [don’t let this](https://gomakethings.com/preventing-cross-site-scripting-attacks-when-using-innerhtml-in-vanilla-javascript/) lull you into a false sense of security.)
+ **見知らぬ人によって書かれたものが、アプリケーションのレンダリングされたHTMLにそのまま表示されることを望まないでください。**
 
-To protect against such attacks, you can use safe APIs like `document.createTextNode()` or `textContent` that only deal with text. You can also preemptively “escape” inputs by replacing potentially dangerous characters like `<`, `>` and others in any user-provided text.
+（面白い事実：クライアントサイドでのレンダリングだけを行うのであれば、`<script>`タグを使ってもJavaScriptを実行[できません。](https://gomakethings.com/preventing-cross-site-scripting-attacks-when-using-innerhtml-in-vanilla-javascript/) セキュリティの間違った感覚をなだめてやる)
 
-Still, the cost of a mistake is high and it’s a hassle to remember it every time you interpolate a user-written string into your output. **This is why modern libraries like React escape text content for strings by default:**
+そのような攻撃から保護するために、テキストだけを扱う `document.createTextNode（）`や `textContent`のような安全なAPIを使うことができます。 また、ユーザーが指定したテキスト内の `<`、 `>`などの潜在的に危険な文字を置き換えることによって、入力を先にエスケープすることもできます。
 
-    <p>
-      {message.text}
-    </p>
+それでも、間違いのコストは高く、ユーザー作成の文字列を出力に挿入するたびに保護しなければいけないのは面倒です。
+**これが、Reactのような最新のライブラリがデフォルトで文字列のテキストコンテンツをエスケープする理由です。**
 
-If `message.text` is a malicious string with an `<img>` or another tag, it won’t turn into a real `<img>` tag. React will escape the content and _then_ insert it into the DOM. So instead of seeing the `<img>` tag you’ll just see its markup.
+```js
+<p>
+    {message.text}
+</p>
+```
 
-To render arbitrary HTML inside a React element, you have to write `dangerouslySetInnerHTML={{ __html: message.text }}`. **The fact that it’s clumsy to write is a _feature_.** It’s meant to be highly visible so that you can catch it in code reviews and codebase audits.
+`message.text`が `<img>`や他のタグを含む悪意のある文字列である場合、それは本当の`<img>`タグにはなりません。 ReactはコンテンツをエスケープしてDOMに挿入します。 そのため `<img>`タグを見る代わりに、そのマークアップを見るだけです。
 
-* * *
+React elements内に任意のHTMLを描画するには、 `dangerouslySetInnerHTML = {{__html：message.text}}`と書く必要があります。
 
-**Does it mean React is entirely safe from injection attacks? No.** HTML and DOM offer [plenty of attack surface](https://github.com/facebook/react/issues/3473#issuecomment-90594748) that is too difficult or slow for React or other UI libraries to mitigate against. Most of the remaining attack vectors involve attributes. For example, if you render `<a href={user.website}>`, beware of the user whose website is `'javascript: stealYourPassword()'`. Spreading user input like `<div {...userData}>` is rare but also dangerous.
+ **ブサイクに書くというのが特徴です**
 
-React [could](https://github.com/facebook/react/issues/10506) provide more protection over time but in many cases these are consequences of server issues that [should](https://github.com/facebook/react/issues/3473#issuecomment-91327040) be fixed there anyway.
+ コードレビューやコードベース監査で確認できるように、見やすくすることを目的としています。
 
-Still, escaping text content is a reasonable first line of defence that catches a lot of potential attacks. Isn’t it nice to know that code like this is safe?
+---
 
-    // Escaped automatically
-    <p>
-      {message.text}
-    </p>
+**Reactがインジェクション攻撃から完全に安全であるということですか？ 違います。** HTMLとDOMは[たくさんの攻撃対象領域](https://github.com/facebook/react/issues/3473#issuecomment-90594748)を提供しますが、Reactや他のUIライブラリがそれを軽減するには難しすぎるか遅すぎます。
 
-**Well, that wasn’t always true either.** And that’s where `$$typeof` comes in.
+残りの攻撃ベクトルの大部分は属性を含みます。 たとえば、 `<a href={user.website}>`をレンダリングする場合は、Webサイトが `'javascript：stealYourPassword()'`であるユーザーに注意してください。 `<div {... userData}>`のようにユーザの入力を広めることはまれですが危険です。
 
-* * *
+Reactは時間をかけてより多くの保護を[提供することができますが](https://github.com/facebook/react/issues/10506)、多くの場合、これらは[修正されるべき](https://github.com/facebook/react/issues/3473#issuecomment-91327040)サーバーの問題の結果です。
 
-React elements are plain objects by design:
 
-    {
-      type: 'marquee',
-      props: {
-        bgcolor: '#ffa7c4',
-        children: 'hi',
-      },
-      key: null,
-      ref: null,
-      $$typeof: Symbol.for('react.element'),
-    }
+それでも、テキストコンテンツのエスケープは、多くの潜在的な攻撃をキャッチする合理的な防御の第一線です。 このようなコードが安全であることを知っておくのはいいことではありませんか？
 
-While normally you create them with `React.createElement()`, it is not required. There are valid use cases for React to support plain element objects written like I just did above. Of course, you probably wouldn’t _want_ to write them like this — but this [can be](https://github.com/facebook/react/pull/3583#issuecomment-90296667) useful for an optimizing compiler, passing UI elements between workers, or for decoupling JSX from the React package.
+```js
+// 自動でエスケープされます
+<p>
+    {message.text}
+</p>
+```
 
-However, **if your server has a hole that lets the user store an arbitrary JSON object** while the client code expects a string, this could become a problem:
+**まあ、必ずしも真実ではないですが** そしてそれが `$$ typeof`が登場するところです。
 
-    // Server could have a hole that lets user store JSON
-    let expectedTextButGotJSON = {  type: 'div',  props: {    dangerouslySetInnerHTML: {      __html: '/* put your exploit here */'    },  },  // ...};let message = { text: expectedTextButGotJSON };
-    
-    // Dangerous in React 0.13
-    <p>
-      {message.text}</p>
+---
 
-In that case, React 0.13 would be [vulnerable](http://danlec.com/blog/xss-via-a-spoofed-react-element) to an XSS attack. To clarify, again, **this attack depends on an existing server hole**. Still, React could do a better job of protecting people against it. And starting with React 0.14, it does.
+React elementsは、設計上、単純なオブジェクトです。
 
-The fix in React 0.14 was to [tag every React element with a Symbol](https://github.com/facebook/react/pull/4832):
+```js
+{
+    type: 'marquee',
+    props: {
+    bgcolor: '#ffa7c4',
+    children: 'hi',
+    },
+    key: null,
+    ref: null,
+    $$typeof: Symbol.for('react.element'),
+}
 
-    {
-      type: 'marquee',
-      props: {
-        bgcolor: '#ffa7c4',
-        children: 'hi',
-      },
-      key: null,
-      ref: null,
-      $$typeof: Symbol.for('react.element'),}
+```
 
-This works because you can’t just put `Symbol`s in JSON. **So even if the server has a security hole and returns JSON instead of text, that JSON can’t include `Symbol.for('react.element')`.** React will check `element.$$typeof`, and will refuse to process the element if it’s missing or invalid.
+通常、それらを `React.createElement()`で作成しますが、必須ではありません。
 
-The nice thing about using `Symbol.for()` specifically is that **Symbols are global between environments like iframes and workers.** So this fix doesn’t prevent passing trusted elements between different parts of the app even in more exotic conditions. Similarly, even if there are multiple copies of React on the page, they can still “agree” on the valid `$$typeof` value.
+上で行ったように書かれたオブジェクトをサポートするためのReactのための有効な使用例があります。
 
-* * *
+もちろん、このように記述したくないと思うかもしれません - しかし、[これは](https://github.com/facebook/react/pull/3583#issuecomment-90296667)最適化コンパイラ、ワーカー間でのUI要素の受け渡し、またはReactパッケージからのJSXの分離に役立ちます。
 
-What about the browsers that [don’t support](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol#Browser_compatibility) Symbols?
+しかしながら、**サーバーに任意のJSONオブジェクトを保存するための口がある場合** クライアントコードは文字列を期待します、これは問題になるかもしれません：
 
-Alas, they don’t get this extra protection. React still includes the `$$typeof` field on the element for consistency, but it’s [set to a number](https://github.com/facebook/react/blob/8482cbe22d1a421b73db602e1f470c632b09f693/packages/shared/ReactSymbols.js#L14-L16) — `0xeac7`.
+```js
+// サーバーにユーザー情報のJSONを許可する口がある場合
+let expectedTextButGotJSON = {
+  type: 'div',
+  props: {
+    dangerouslySetInnerHTML: {
+      __html: '/* ここに悪いコードを置く */'
+    },
+  },
+  // ...
+};
+let message = { text: expectedTextButGotJSON };
 
-Why this number specifically? `0xeac7` kinda looks like “React”.
+// React 0.13で危険
+<p>
+  {message.text}
+</p>
+```
+
+その場合、React 0.13はXSS攻撃に対して[脆弱](http://danlec.com/blog/xss-via-a-spoofed-react-element)になります。
+さらに明確にすると、**この攻撃は既存のサーバーホールに依存しています**。
+それでも、Reactはその問題に対して人々を保護するためのより良い仕事をすることができました。 React 0.14から始まっています。
+
+React 0.14での修正は、[すべてのReact要素にシンボルを付ける](https://github.com/facebook/react/pull/4832)です。:
+
+```js
+{
+  type: 'marquee',
+  props: {
+    bgcolor: '#ffa7c4',
+    children: 'hi',
+  },
+  key: null,
+  ref: null,
+  $$typeof: Symbol.for('react.element'),
+}
+```
+
+JSONには単に`Symbol`を入れることができないので、これはうまくいきます。
+ 
+ **そのため、サーバーにセキュリティホールがあり、テキストではなくJSONを返す場合でも、そのJSONには `Symbol.for（ 'react.element'）`を含めることができません。**
+ Reactは`element.$$typeof`をチェックします。そしてそれがない場合もしくは無効な場合に要素の処理を拒否します。
+特に`Symbol.for()`を使うことのいいところは、**シンボルはiframeやワーカーのような環境間でグローバルであるということです。**
+そのため、この修正によって、よりエキゾチックな状況でも、アプリのさまざまな部分の間で信頼できる要素を渡すことが妨げられることはありません。
+同様に、たとえページ上にReactのコピーが複数あっても、それらは有効な `$$typeof`の値に「同意する」ことができます。
+
+---
+
+Symbolsを[サポートしていない](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol#Browser_compatibility)ブラウザーについてはどうですか？
+
+ああ、彼らはこの特別な保護を受けていません。
+
+Reactは一貫性のためにまだ要素上に `$$typeof`フィールドを含んでいますが、それは[数値に設定]されています — `0xeac7`。
+
+なぜこの数字なの？ `0xeac7`はちょっと“React”のように見えます。
