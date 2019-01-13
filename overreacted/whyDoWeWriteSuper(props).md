@@ -115,7 +115,7 @@ constructor(props) {
 
 ---
 
-基本的な`React.Component`でコンストラクターが`this.props`を初期化するために、`props`を`super`に渡すことが必要と思うかもしれません。
+`React.Component`でコンストラクターが`this.props`を初期化するために、`props`を`super`に渡すことが必要と思うかもしれません。
 
 ```javascript
 // React内部
