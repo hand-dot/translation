@@ -16,7 +16,7 @@ React.createElement(
 )
 ```
 
-そしてこの関数はオブジェクトを返します。このオブジェクトをReact _element_ と呼びます。次になにをレンダリングするかReactに指示します。あなたの書いたコンポーネントはそれらのツリーを返します。
+そしてこの関数はオブジェクトを返します。このオブジェクトをReact _element_ と呼びます。次に何をレンダリングするかReactに指示します。あなたの書いたコンポーネントはそれらのツリーを返します。
 
 ```js
 {
@@ -32,13 +32,12 @@ React.createElement(
 ```
 
 Reactを使ったことがあれば`type`, `props`, `key`,`ref`フィールドは知っているかもしれませんが、
-**`$$typeof`?ってなんだ？しかもそれはなぜ値に`Symbol()`が入っているんだ？**
+**`$$typeof`ってなんだ？しかもそれはなぜ値に`Symbol()`が入っているんだ？**
 
 
 これはReactを使うことにおいては知る必要がないことですが、
-
 この記事にはセキュリティについてのいくつかのヒントがあります。 
-いつかあなたはUIライブラリを書くでしょう、その時これは役に立つでしょう。
+いつかあなたはUIライブラリを書くでしょう、その時これは役に立つかもしれません。
 私はそう望んでいます。
 
 ---
@@ -56,9 +55,9 @@ messageEl.innerHTML = '<p>' + message.text + '</p>';
 
 （面白い事実：クライアントサイドでのレンダリングだけを行うのであれば、`<script>`タグを使ってもJavaScriptを実行[できません。](https://gomakethings.com/preventing-cross-site-scripting-attacks-when-using-innerhtml-in-vanilla-javascript/) セキュリティの間違った感覚をなだめてやる)
 
-そのような攻撃から保護するために、テキストだけを扱う `document.createTextNode（）`や `textContent`のような安全なAPIを使うことができます。 また、ユーザーが指定したテキスト内の `<`、 `>`などの潜在的に危険な文字を置き換えることによって、入力を先にエスケープすることもできます。
+そのような攻撃から保護するために、テキストだけを扱う `document.createTextNode（）`や `textContent`のような安全なAPIを使うことができます。 また、ユーザーが指定したテキスト内の `<`、 `>`などの潜在的に危険な文字を置き換えることによって、入力を率先してにエスケープすることもできます。
 
-それでも、間違いのコストは高く、ユーザー作成の文字列を出力に挿入するたびに保護しなければいけないのは面倒です。
+それでも、間違いのコストは高く、ユーザーが作成した文字列を出力に挿入するたびに保護しなければいけないのは面倒です。
 **これが、Reactのような最新のライブラリがデフォルトで文字列のテキストコンテンツをエスケープする理由です。**
 
 ```js
@@ -71,7 +70,7 @@ messageEl.innerHTML = '<p>' + message.text + '</p>';
 
 React elements内に任意のHTMLを描画するには、 `dangerouslySetInnerHTML = {{__html：message.text}}`と書く必要があります。
 
- **ブサイクに書くというのが特徴です**
+ **ぎこちない感じに書くというのが特徴です**
 
  コードレビューやコードベース監査で確認できるように、見やすくすることを目的としています。
 
@@ -79,7 +78,7 @@ React elements内に任意のHTMLを描画するには、 `dangerouslySetInnerHT
 
 **Reactがインジェクション攻撃から完全に安全であるということですか？ 違います。** HTMLとDOMは[たくさんの攻撃対象領域](https://github.com/facebook/react/issues/3473#issuecomment-90594748)を提供しますが、Reactや他のUIライブラリがそれを軽減するには難しすぎるか遅すぎます。
 
-残りの攻撃ベクトルの大部分は属性を含みます。 たとえば、 `<a href={user.website}>`をレンダリングする場合は、Webサイトが `'javascript：stealYourPassword()'`であるユーザーに注意してください。 `<div {... userData}>`のようにユーザの入力を広めることはまれですが危険です。
+他の攻撃手法の大部分は属性を含みます。 たとえば、 `<a href={user.website}>`をレンダリングする場合は、Webサイトが `'javascript：stealYourPassword()'`であるユーザーに注意してください。 `<div {... userData}>`のようにユーザの情報を展開することはまれですが危険です。
 
 Reactは時間をかけてより多くの保護を[提供することができますが](https://github.com/facebook/react/issues/10506)、多くの場合、これらは[修正されるべき](https://github.com/facebook/react/issues/3473#issuecomment-91327040)サーバーの問題の結果です。
 
@@ -93,7 +92,7 @@ Reactは時間をかけてより多くの保護を[提供することができ�
 </p>
 ```
 
-**まあ、必ずしも真実ではないですが** そしてそれが `$$ typeof`が登場するところです。
+**まあ、必ずしも安全ではないです** そこで `$$typeof`が登場するところです。
 
 ---
 
@@ -115,7 +114,7 @@ React elementsは、設計上、単純なオブジェクトです。
 
 通常、それらを `React.createElement()`で作成しますが、必須ではありません。
 
-上で行ったように書かれたオブジェクトをサポートするためのReactのための有効な使用例があります。
+上で行ったように書かれたオブジェクトをサポートするReactための有効な使用例があります。
 
 もちろん、このように記述したくないと思うかもしれません - しかし、[これは](https://github.com/facebook/react/pull/3583#issuecomment-90296667)最適化コンパイラ、ワーカー間でのUI要素の受け渡し、またはReactパッケージからのJSXの分離に役立ちます。
 
@@ -173,6 +172,6 @@ Symbolsを[サポートしていない](https://developer.mozilla.org/en-US/docs
 
 ああ、彼らはこの特別な保護を受けていません。
 
-Reactは一貫性のためにまだ要素上に `$$typeof`フィールドを含んでいますが、それは[数値に設定]されています — `0xeac7`。
+Reactは一貫性のためにまだ要素上に `$$typeof`フィールドを含んでいますが、それは[数値に設定](https://github.com/facebook/react/blob/8482cbe22d1a421b73db602e1f470c632b09f693/packages/shared/ReactSymbols.js#L14-L16)されています — `0xeac7`。
 
-なぜこの数字なの？ `0xeac7`はちょっと“React”のように見えます。
+なぜこの数字なの？ ん、`0xeac7`はちょっと“React”のように見えますねぇ。
