@@ -18,8 +18,7 @@ Reactはclassとしての定義もサポートしています
   }
 ```
 
-( [最近まで](https://reactjs.org/docs/hooks-intro.html),
-ステートの機能を使うための唯一の方法でした)
+([最近まで](https://reactjs.org/docs/hooks-intro.html),ステートの機能を使うための唯一の方法でした)
 
 
 `<Greeting />`を描画するとき、どのように定義されたか気にする必要はありません。
@@ -71,7 +70,7 @@ Reactはclassとしての定義もサポートしています
 
 **これは長い旅です。ベルトを締めてください。その投稿はReact自身についての十分な情報は持っていません。しかし、Javascriptで`new`, `this`, `class`, `arrow functions`, `prototype`, `__proto__`,`instanceof`のこれらがどのように機能するか説明します。幸運にもReactを使う時は、これらのことを考える必要がありませんでした。**
 
-答えを知りたいだけなら最後までスクロールしてください。
+(答えを知りたいだけなら最後までスクロールしてください。)
 
 ---
 
