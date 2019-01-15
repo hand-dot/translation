@@ -2,6 +2,7 @@
 
 以下は[Why Do We Write super(props)?](https://overreacted.io/why-do-we-write-super-props/)  の日本語訳です。
 
+
 `Hooks`が最新でアツいって聞いたよ。皮肉なことだけどクラスコンポーネントの楽しい事実について述べてブログをスタートしたい。どうだ！
 
 **これらの潜在的問題はReactを効率的に使うためには重要じゃない。でも、もしどうやって動いているか深く掘り下げることが好きなら面白いかもね**
@@ -12,19 +13,21 @@
 
 私は人生で `super(props)` 何度も書いたよ
 
-```javascript
+```jsx{3}
 class Checkbox extends React.Component {
   constructor(props) {
-    super(props); 
+    super(props);
     this.state = { isOn: true };
   }
   // ...
 }
 ```
 
-もちろん、`class fields proposal`なら儀式(constructor)をスキップできる。
+Of course, the [class fields proposal](https://github.com/tc39/proposal-class-fields) lets us skip the ceremony:
+もちろん、[class fields proposal](https://github.com/tc39/proposal-class-fields) なら儀式(constructor)をスキップできる。
 
-```javascript
+
+```jsx
 class Checkbox extends React.Component {
   state = { isOn: true };
   // ...
@@ -33,9 +36,9 @@ class Checkbox extends React.Component {
 
 2015年に`React 0.13`がプレーンクラスのサポートを追加したとき、こんな感じの構文が[計画](https://reactjs.org/blog/2015/01/27/react-v0.13.0-beta-1.html#es7-property-initializers)されていたよ。コンストラクタの定義と`super(props)`の呼び出しは常にクラスフィールドが人間工学に基づいた代替手段を提供するまでの一時的な解決策だった。
 
-でも、ES2015の機能のみを使って例に戻りましょう。
+でも、ES2015の機能のみを使って例に戻りましょう。:
 
-```javascript
+```jsx{3}
 class Checkbox extends React.Component {
   constructor(props) {
     super(props);
@@ -49,11 +52,11 @@ class Checkbox extends React.Component {
 
 ---
 
-JavaScriptではsuperは親クラスのコンストラクタを参照します。(この例では、親クラスはReact.Component実装を指しています。)
+JavaScriptでは`super`は親クラスのコンストラクタを参照します。(この例では、親クラスは`React.Component`実装を指しています。)
 
 重要なのは、JavaScriptはあなたがコンストラクターで親のコンストラクターを呼ぶまで`this`は使わせてくれません。
 
-```javascript
+```jsx
 class Checkbox extends React.Component {
   constructor(props) {
     // 🔴 `this` はまだ使えない
@@ -65,9 +68,9 @@ class Checkbox extends React.Component {
 }
 ```
 
-あなたがthisを使う前にJavascriptが親のコンスラクターの実行を強制させるのには理由があります。クラス階層を考えてみてください
+あなたが`this`を使う前にJavascriptが親のコンスラクターの実行を強制させるのには理由があります。クラス階層を考えてみてください
 
-```javascript
+```jsx
 class Person {
   constructor(name) {
     this.name = name;
@@ -76,7 +79,7 @@ class Person {
 
 class PolitePerson extends Person {
   constructor(name) {
-    this.greetColleagues(); // 🔴 ここでは許可されていない, 下記をご確認ください
+    this.greetColleagues(); // // 🔴 ここでは許可されていない。 下記をご確認ください
     super(name);
   }
   greetColleagues() {
@@ -85,11 +88,10 @@ class PolitePerson extends Person {
 }
 ```
 
-`super`の前に`this`の使用が許可されていた場合のことを想像してみてください。
-一ヶ月後、`greetColleagues`のメッセージに人の名前を入れるかもしれません。
+`super`の前に`this`の使用が許可されていた場合のことを想像してみてください。一ヶ月後、`greetColleagues`のメッセージに人の名前を入れるかもしれません。
 
-```javascript
-greetColleagues() {
+```jsx
+  greetColleagues() {
     alert('Good morning folks!');
     alert('My name is ' + this.name + ', nice to meet you!');
   }
@@ -101,21 +103,22 @@ greetColleagues() {
 この落とし穴を避けるために **Javascriptはコンストラクターでthisを使いたい場合に`super`の呼び出しを強制します。**
 そして、この制限はクラス定義されたReactのコンポーネントにも適用されます。
 
-```javascript
-constructor(props) {
+```jsx
+  constructor(props) {
     super(props);
     // ✅ ここから`this`が使える
     this.state = { isOn: true };
   }
 ```
 
-他の疑問が残っています。なぜpropsを引数に渡すの？
+他の疑問が残っています。なぜ`props`を引数に渡すの？
+
 
 ---
 
 `React.Component`でコンストラクターが`this.props`を初期化するために、`props`を`super`に渡すことが必要と思うかもしれません。
 
-```javascript
+```jsx
 // React内部
 class Component {
   constructor(props) {
@@ -130,30 +133,25 @@ class Component {
 しかし、どういうわけか引数(`props`)なしの`super()`で呼び出しても、
 `this.props`に`render`や他のメソッド内でアクセスできます。(信じないなら試してみて!)
 
-どうやって動いているんだ？
-**Reactも`props`をコンストラクターを呼んだ後にインスタンスに割り当てていることがわかる**
+どうやって動いているんだ？**Reactも`props`をコンストラクターを呼んだ後にインスタンスに割り当てていることがわかる**
 
-```js
-// React内部
-const instance = new YourComponent(props);
-instance.props = props;
+```jsx
+  // React内部
+  const instance = new YourComponent(props);
+  instance.props = props;
 ```
 
-そう。だからもし`props`を`super`に渡し忘れても、Reactは`props`を設定します。これには理由があります。
+そう。だからもし`props`を`super()`に渡し忘れても、Reactは`props`を設定します。これには理由があります。
 
-Reactがclassをサポートしたとき、ES6のクラスだけをサポートしたのではありません。
-ゴールはより広いクラスの抽象概念をサポートすることでした。
-コンポーネントを定義するのにClojureScript, CoffeeScript, ES6, Fable, Scala.js, TypeScriptや他の方法がどれほど成功するのかは[不明確](https://reactjs.org/blog/2015/01/27/react-v0.13.0-beta-1.html#other-languages)でした。
-
-
-だからES6のclassで`super()`の呼び出しが必須であるにも関わらず、意図的に固執しませんでした。
+Reactがclassをサポートしたとき、ES6のクラスだけをサポートしたのではありません。ゴールはより広いクラスの抽象概念をサポートすることでした。
+コンポーネントを定義するのにClojureScript, CoffeeScript, ES6, Fable, Scala.js, TypeScriptや他の方法がどれほど成功するのかは[不明確](https://reactjs.org/blog/2015/01/27/react-v0.13.0-beta-1.html#other-languages) でした。だからES6のclassで`super()`の呼び出しが必須であるにも関わらず、意図的に固執しませんでした。
 
 これは`super(props)`の代わりに`super()`と書けるということを意味してる？
-多分そうじゃない。まだ紛らわしい。
-確かに、Reactはコンストラクターが実行されたあとに`this.props`を割り当てます。
-でも、親とあなたのコンストラクターの実行が終わるまでの間、`this.props`は未定義なのです。
 
-```javascript
+**多分そうじゃない。まだ紛らわしい。** 確かに、Reactはコンストラクターが実行されたあとに`this.props`を割り当てます。
+でも、親とあなたのコンストラクターの実行が終わるまでの間、`this.props`は未定義なのです。:
+
+```jsx{14}
 // React内部
 class Component {
   constructor(props) {
@@ -173,11 +171,9 @@ class Button extends React.Component {
 }
 ```
 
-コンストラクタから呼び出されるメソッドでこれが発生した場合、デバッグするのはさらに困難になります。
-**厳密に必要というわけではないですが、私は常に`super(props)`で渡すことをオススメしています。**
+コンストラクタから呼び出されるメソッドでこれが発生した場合、デバッグするのはさらに困難になります。**厳密に必要というわけではないですが、私は常に`super(props)`で渡すことをオススメしています。**
 
-
-```javascript
+```jsx
 class Button extends React.Component {
   constructor(props) {
     super(props); // ✅ props渡した
@@ -190,7 +186,7 @@ class Button extends React.Component {
 
 これはコンストラクタが終了する前でも`this.props`は設定されているということを保証します。
 
----
+-----
 
 長年のReactユーザーは興味があるかもしれないことを最後に少々。
 

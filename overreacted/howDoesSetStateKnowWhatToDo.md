@@ -4,7 +4,7 @@
 
 コンポーネントの中で `setState`を呼び出すとき、何が起こると思いますか？
 
-```js
+```jsx{11}
 import React from 'react';
 import ReactDOM from 'react-dom';
 
@@ -15,7 +15,8 @@ class Button extends React.Component {
     this.handleClick = this.handleClick.bind(this);
   }
   handleClick() {
-    this.setState({ clicked: true });  }
+    this.setState({ clicked: true });
+  }
   render() {
     if (this.state.clicked) {
       return <h1>Thanks</h1>;
@@ -29,30 +30,27 @@ class Button extends React.Component {
 }
 
 ReactDOM.render(<Button />, document.getElementById('container'));
-```  
+```
 
 そう、次の `{clicked：true}`の状態でReactはコンポーネントを再レンダリングし、返された `<h1> Thanks </h1>`要素と一致するようにDOMを更新します。
 
 簡単そうに見えますね。しかし、待ってください _React_ がしますか？それとも _React DOM_ ？
 
-
 DOMを更新することは、React DOMの責務のように思えます。しかし、React DOMのものではない、`this.setState()`を呼び出しています。 そして私たちの `React.Component`クラスはReactの内部で定義されています。
 
 ならどうやって `React.Component`内の` setState()`がDOMを更新することができるのでしょうか。
 
-**免責事項：このブログの他のほとんど([これとか](https://overreacted.io/why-do-react-elements-have-typeof-property/), [これとか](https://overreacted.io/how-does-react-tell-a-class-from-a-function/), [これ](https://overreacted.io/why-do-we-write-super-props/))の投稿と同じように、Reactを効率的に使うために実際に知っておく必要はありません。この記事は、カーテンの裏に何があるのかを知りたい人のためのものです。 完全にオプション！**
+**免責事項：このブログの他のほとんど([これとか](/why-do-react-elements-have-typeof-property/), [これとか](/how-does-react-tell-a-class-from-a-function/), [これ](/why-do-we-write-super-props/))の投稿と同じように、Reactを効率的に使うために実際に知っておく必要はありません。この記事は、カーテンの裏に何があるのかを知りたい人のためのものです。 完全にオプション！**
 
 ---
 
 `React.Component`クラスはDOM更新ロジックを含んでいると思うかもしれません。
 
-しかし、そうであれば、 `this.setState()`は他の環境でどのように機能するのでしょうか？ 例えば、React Nativeアプリケーションのコンポーネントは `React.Component`も継承しています。
-これらは上記と同じように `this.setState()`を呼び出しますが、React NativeはDOMの代わりにAndroidおよびiOSのネイティブビューで動作します。
+しかし、そうであれば、 `this.setState()`は他の環境でどのように機能するのでしょうか？ 例えば、React Nativeアプリケーションのコンポーネントは `React.Component`も継承しています。これらは上記と同じように `this.setState()`を呼び出しますが、React NativeはDOMの代わりにAndroidおよびiOSのネイティブビューで動作します。
 
 React Test RendererまたはShallow Rendererについてもお詳しいかもしれませんが、 どちらのテスト方法でも通常のコンポーネントをレンダリングしてその中で `this.setState()`を呼び出すことができますがどちらもDOMとは連携できません。
 
 [React ART](https://github.com/facebook/react/tree/master/packages/react-art)のようなレンダラーを使用した場合は、ページ上で複数のレンダラーを使用することが可能です。(たとえば、ARTコンポーネントはReact DOMツリー内で機能します。)これにより、グローバルフラグまたは変数が保持できなくなります。
-
 
 だからどういうわけか **`React.Component`は状態の更新を扱うことをプラットフォーム固有のコードに委任します。** これがどのように起こるかを理解する前にパッケージがどのように分離されるか、そしてその理由を深く掘り下げましょう。
 
@@ -69,8 +67,7 @@ Reactの「エンジン」は `react`パッケージの中にあるという一�
 対照的に、レンダラパッケージはReact階層をDOMノードにマウントすることを可能にする `ReactDOM.render()`のようなプラットフォーム特有のAPIを公開します。各レンダラーはこのようなAPIを提供します。
 理想的には、ほとんどのコンポーネントはレンダラーから何かをインポートする必要はありません。 これにより、移植性が高まります。
 
-**ほとんどの人がReactの「エンジン」として想像しているのは、個々のレンダラーの内部にあります。**
-多くのレンダラーには同じコードのコピーが含まれています - これを["reconciler"](https://github.com/facebook/react/tree/master/packages/react-reconciler)と呼びます。 [ビルドステップ](https://reactjs.org/blog/2017/12/15/improving-the-repository-infrastructure.html#migrating-to-google-closure-compiler) では、reconcilerのコードとレンダラーコードをスムーズにまとめて、パフォーマンスを向上させるための高度に最適化された単一のバンドルにします。
+**ほとんどの人がReactの「エンジン」として想像しているのは、個々のレンダラーの内部にあります。** 多くのレンダラーには同じコードのコピーが含まれています - これを["reconciler"](https://github.com/facebook/react/tree/master/packages/react-reconciler)と呼びます。 [ビルドステップ](https://reactjs.org/blog/2017/12/15/improving-the-repository-infrastructure.html#migrating-to-google-closure-compiler) では、reconcilerのコードとレンダラーコードをスムーズにまとめて、パフォーマンスを向上させるための高度に最適化された単一のバンドルにします。
 (コードのコピーはバンドルサイズには通常良いものではありませんが、Reactユーザーの大多数は一度に1つのレンダラーしか必要としません（例えば `react-dom`)
 
 ここで重要なのは、 `react`パッケージはReactの機能を使うだけで、実装されている方法については何も知らないということです。
@@ -119,7 +116,8 @@ React DOMはある方法でコンテキスト値を追跡するかもしれま�
 **答えは、すべてのレンダラーが、作成されたクラスに特別なフィールドを設定することです。** このフィールドは「updater」と呼ばれています。
 それはあなたが設定するものではありません - むしろ、それはあなたのクラスのインスタンスを作成した直後にReact React DOM ServerまたはReact Nativeがセットするものです：
 
-```js
+
+```js{4,9,14}
 // React DOM 内部
 const inst = new YourComponent();
 inst.props = props;
@@ -151,18 +149,17 @@ React DOMサーバーは状態の更新を無視して[警告したいかもし�
 
 ---
 
-クラスについてはわかりましたが、フックについてはどうですか?
+クラスについてはわかりましたが、フックについてはどうですか？
 
 初めて[Hooks proposal API](https://reactjs.org/docs/hooks-intro.html)を見たとき、しばしば疑問に思うようです「`useState`はどのようにしたらよいのでしょうか?」仮定は、これが `this.setState()`を使った`React.Component`クラスよりも「魔法的」であることです。
 しかし、今日見たように、クラスの`setState()`の実装は初めからずっと「幻想的」です。 現在のレンダラーを呼び出すこと以外は何もしません。
 
 そして `useState`フックは[全く同じことをします。](https://github.com/facebook/react/blob/ce43a8cd07c355647922480977b46713bd51883e/packages/react/src/ReactHooks.js#L55-L56)
 
-**`updater`フィールドの代わりに、フックは"dispatcher"オブジェクトを使います。**
-`React.useState()`,`React.useEffect()`、あるいは他の組み込みHookを呼び出すと、これらの呼び出しは現在のディスパッチャに転送されます。
+**`updater`フィールドの代わりに、フックは"dispatcher"オブジェクトを使います。** `React.useState()`,`React.useEffect()`、あるいは他の組み込みHookを呼び出すと、これらの呼び出しは現在のディスパッチャに転送されます。
 
 ```js
-// React内 (少し簡略化)
+// React内 (少し簡略化しています)
 const React = {
   // 本当のプロパティはもう少し深くに隠されています。見つけられたら見てください！
   __currentDispatcher: null,
@@ -177,9 +174,10 @@ const React = {
   // ...
 };
 ```
+
 そして個々のレンダラーはコンポーネントをレンダリングする前にディスパッチャーを設定します：
 
-```js
+```js{3,8-9}
 // React DOM内
 const prevDispatcher = React.__currentDispatcher;
 React.__currentDispatcher = ReactDOMDispatcher;
