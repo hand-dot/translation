@@ -31,9 +31,7 @@ class Checkbox extends React.Component {
 }
 ```
 
-2015年に`React 0.13`がプレーンクラスのサポートを追加したとき、こんな感じの構文が[計画](https://reactjs.org/blog/2015/01/27/react-v0.13.0-beta-1.html#es7-property-initializers)されていたよ。
-
-コンストラクタの定義と`super(props)`の呼び出しは常にクラスフィールドが人間工学に基づいた代替手段を提供するまでの一時的な解決策だった。
+2015年に`React 0.13`がプレーンクラスのサポートを追加したとき、こんな感じの構文が[計画](https://reactjs.org/blog/2015/01/27/react-v0.13.0-beta-1.html#es7-property-initializers)されていたよ。コンストラクタの定義と`super(props)`の呼び出しは常にクラスフィールドが人間工学に基づいた代替手段を提供するまでの一時的な解決策だった。
 
 でも、ES2015の機能のみを使って例に戻りましょう。
 
@@ -135,6 +133,12 @@ class Component {
 どうやって動いているんだ？
 **Reactも`props`をコンストラクターを呼んだ後にインスタンスに割り当てていることがわかる**
 
+```js
+// React内部
+const instance = new YourComponent(props);
+instance.props = props;
+```
+
 そう。だからもし`props`を`super`に渡し忘れても、Reactは`props`を設定します。これには理由があります。
 
 Reactがclassをサポートしたとき、ES6のクラスだけをサポートしたのではありません。
@@ -186,11 +190,9 @@ class Button extends React.Component {
 
 これはコンストラクタが終了する前でも`this.props`は設定されているということを保証します。
 
-
 ---
 
 長年のReactユーザーは興味があるかもしれないことを最後に少々。
-
 
 Context APIをclass(古いタイプのcontextTypesもしくはReact 16.6で追加された新しいcontextTypeのどちらでも)内で使用する時、`context`は2つ目の引数としてコンストラクターに渡されることに、気づいているかもしれません。
 
